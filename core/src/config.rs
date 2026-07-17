@@ -1,10 +1,10 @@
 //! Chargement du fichier de config YAML (config/games.yaml par defaut).
 
 use anyhow::{Context, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
     /// DPI materiel courant de la souris (reglage OSD/logiciel du peripherique).
     /// Windows ne peut pas lire cette valeur sur le bus HID : c'est a
@@ -39,7 +39,7 @@ fn default_cycle_hotkey() -> String {
     "Ctrl+Alt+F9".to_string()
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameEntry {
     /// Nom affiche dans le tray / menu.
     pub name: String,
@@ -87,7 +87,7 @@ pub struct GameEntry {
     pub auto_detect: Option<AutoDetect>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AutoDetect {
     /// Nom du process (ex: "GameName.exe").
     pub process_name: String,
@@ -113,7 +113,7 @@ fn default_poll_ms() -> u64 {
     250
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub settings: Settings,
     pub games: Vec<GameEntry>,
@@ -129,6 +129,18 @@ impl Config {
             anyhow::bail!("la config ne contient aucun jeu (section 'games' vide)");
         }
         Ok(config)
+    }
+
+    /// Ecrit la config au format YAML. Utilise par la GUI (`gui/`) pour
+    /// sauvegarder les modifications faites dans l'editeur.
+    pub fn save(&self, path: &Path) -> Result<()> {
+        let text = serde_yaml::to_string(self).context("serialisation YAML")?;
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)
+                .with_context(|| format!("creation du dossier {}", parent.display()))?;
+        }
+        std::fs::write(path, text)
+            .with_context(|| format!("ecriture impossible de {}", path.display()))
     }
 }
 

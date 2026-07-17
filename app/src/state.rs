@@ -4,8 +4,8 @@
 
 use std::collections::HashMap;
 
-use crate::config::Config;
-use crate::scaling::{compute_factor, AxisAccumulator};
+use unisense_core::config::Config;
+use unisense_core::scaling::{compute_factor, AxisAccumulator};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {

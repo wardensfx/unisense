@@ -3,11 +3,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod capture;
-mod config;
 mod hotkey;
 mod interception;
 mod memory_watch;
-mod scaling;
 mod state;
 mod tray;
 
@@ -16,9 +14,9 @@ use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 
 use anyhow::{Context, Result};
+use unisense_core::config::Config;
 
 use capture::{mouse_hotkeys_from_specs, MouseHotkeyAction};
-use config::Config;
 use hotkey::HotkeySpec;
 use state::AppState;
 use tray::{keyboard_hotkeys_from_specs, HotkeyBinding};
@@ -78,7 +76,7 @@ fn run() -> Result<()> {
     let mouse_hotkeys = mouse_hotkeys_from_specs(&mouse_specs);
 
     // --- Detection automatique memoire (optionnelle, 5.2) ---
-    let auto_detect_games: Vec<(usize, config::AutoDetect)> = config
+    let auto_detect_games: Vec<(usize, unisense_core::config::AutoDetect)> = config
         .games
         .iter()
         .enumerate()

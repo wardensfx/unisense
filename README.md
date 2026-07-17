@@ -80,17 +80,23 @@ redemarrer.
 ### 2. Compiler unisense
 
 Prerequis : [Rust](https://rustup.rs/) (edition 2021+), toolchain MSVC
-(`rustup default stable-x86_64-pc-windows-msvc`).
+(`rustup default stable-x86_64-pc-windows-msvc`). Le depot est un workspace
+Cargo a trois membres : `core` (logique partagee), `app` (l'executable tray,
+celui decrit ci-dessus) et `gui` (l'interface de configuration, voir plus
+bas).
 
 ```
-cargo build --release
+cargo build --release -p unisense
 ```
 
-`build.rs` copie automatiquement `vendor/interception/interception.dll` a
-cote de l'executable genere (`target/release/unisense.exe`) a chaque build :
-rien a faire manuellement pour ce fichier. Copiez juste l'exe, le DLL a cote
-(deja fait par le build), et le dossier `config/` la ou vous voulez
-l'executer.
+`app/build.rs` copie automatiquement `vendor/interception/interception.dll`
+a cote de l'executable genere (`target/release/unisense.exe`) a chaque
+build : rien a faire manuellement pour ce fichier. Copiez juste l'exe, le
+DLL a cote (deja fait par le build), et le dossier `config/` la ou vous
+voulez l'executer.
+
+(`cargo build --release` sans `-p` compile aussi la GUI en plus — plus long,
+et necessite le runtime WebView2, present par defaut sur Windows 11.)
 
 > unisense doit generalement etre lance **en administrateur** : le driver
 > Interception refuse `interception_create_context()` sinon.
@@ -128,6 +134,45 @@ dans `config.rs` / le YAML) — **uniquement valable si la formule de
 sensibilite du jeu est lineaire**, ce qui est vrai pour la plupart des
 moteurs Source/Quake/Unreal/idTech mais faux pour certains jeux (Minecraft
 par exemple a une courbe cubique).
+
+## Interface graphique de configuration (optionnelle)
+
+Editer `games.yaml` a la main fonctionne, mais un second executable,
+`unisense-gui`, offre une interface pour le faire sans toucher au YAML :
+ajout/suppression de jeux, chargement de la config d'exemple en un clic, et
+un assistant pour l'`auto_detect` (5.2). Elle lit/ecrit exactement le meme
+`config/games.yaml` que l'app tray (a cote de son propre executable — placez
+les deux .exe dans le meme dossier).
+
+```
+cargo build --release -p unisense-gui
+```
+
+`target/release/unisense-gui.exe` — inutile de le lancer en administrateur
+(sauf pour lire la memoire d'un jeu protege par un anti-cheat qui l'exige).
+
+Fonctionnalites :
+
+- Cadran de calibration : cible cm/360° et DPI, avec un apercu du facteur
+  applique a chaque jeu de la liste (badge `×0.xx`) mis a jour en direct.
+- Cartes de jeux : ajout, edition, suppression ; previsualisation du facteur
+  pendant la saisie de la constante.
+- **Charger l'exemple** : recharge le contenu de `games.example.yaml`
+  (embarque dans le binaire au moment de la compilation, aucun acces
+  reseau) comme point de depart.
+- **Assistant de detection automatique** (dans l'editeur d'un jeu, section
+  repliable) :
+  - Un selecteur de processus (liste les process en cours) et de module,
+    pour remplir `process_name`/`module_name` sans les taper a la main.
+  - Un mini-scanner memoire "avant/apres" : vous capturez un instantane de
+    la memoire du jeu dans un etat (ex. menu), un second dans l'autre etat
+    (ex. en jeu), et l'outil liste les octets qui ont change entre les deux
+    — un bouton "Utiliser" sur un candidat remplit directement
+    `offset`/`in_game_bytes`. Lecture seule (`ReadProcessMemory`), plafonnee
+    en volume scanne (~96 Mo de regions privees lisibles/inscriptibles) :
+    c'est un scan "premiere passe" a la Cheat Engine, pas un outil de reverse
+    engineering complet — a affiner en repetant l'operation si trop de
+    candidats remontent.
 
 ## Hotkeys
 
@@ -207,18 +252,33 @@ independamment d'Interception.
 
 ## Architecture du code
 
+Workspace Cargo a trois membres :
+
 ```
-src/
-  interception.rs  Bindings FFI vers interception.dll (chargement dynamique)
-  scaling.rs        Calcul du facteur + accumulateur sous-comptage (teste)
-  config.rs          Schema + chargement du YAML
-  hotkey.rs           Parsing "Ctrl+Alt+F9" / "Mouse4" -> spec clavier/souris
-  capture.rs          Thread de capture Interception (scaling + hotkeys souris)
-  state.rs             Etat partage (mode courant, facteurs, accumulateurs)
-  tray.rs               Fenetre Win32 invisible, icone systray, hotkeys clavier
-  memory_watch.rs        Detection auto (5.2), framework generique
-  main.rs                 Cablage de tout ce qui precede
+core/                       unisense-core (lib, sans dependance Win32)
+  src/config.rs              Schema + chargement/sauvegarde du YAML
+  src/scaling.rs              Calcul du facteur + accumulateur (teste)
+
+app/                        unisense (l'executable tray, decrit plus haut)
+  build.rs                   Copie vendor/interception/interception.dll
+  src/interception.rs         Bindings FFI vers interception.dll
+  src/hotkey.rs                Parsing "Ctrl+Alt+F9" / "Mouse4"
+  src/capture.rs                Thread de capture (scaling + hotkeys souris)
+  src/state.rs                   Etat partage (mode, facteurs, accumulateurs)
+  src/tray.rs                     Fenetre Win32 invisible, systray, hotkeys
+  src/memory_watch.rs              Detection auto (5.2), framework generique
+  src/main.rs                       Cablage de tout ce qui precede
+
+gui/                        unisense-gui (interface de configuration)
+  src-tauri/build.rs          tauri_build::build()
+  src-tauri/src/sysinfo.rs     Process/module/scan memoire (Win32)
+  src-tauri/src/commands.rs     Commandes exposees au frontend
+  src-tauri/src/main.rs          Cablage Tauri
+  frontend/                       HTML/CSS/JS statique (pas de bundler)
 ```
+
+`core` est partage entre `app` et `gui` pour que le calcul du facteur et le
+schema de config restent une seule source de verite.
 
 Un seul facteur lineaire est applique (`x' = x * F`, `y' = y * F`) : pas de
 courbe d'acceleration, de smoothing ni de capping ajoutes par l'outil, comme
@@ -245,9 +305,7 @@ demande.
   est actif (le distinguo menu/gameplay resterait manuel ou via
   `auto_detect`).
 - **Rechargement a chaud** du YAML (watcher de fichier) sans relancer
-  l'appli.
-- **Petite fenetre de reglage** (au lieu d'editer le YAML a la main) avec
-  aperçu du cm/360 resultant en temps reel.
+  l'appli tray.
 - **Indicateur a l'ecran** (overlay discret) du mode actif, pour ceux qui ne
   regardent pas la zone de notification.
 - **Multi-souris** : le code gere deja des accumulateurs par
@@ -257,8 +315,21 @@ demande.
   de l'appli + creation de la tache de demarrage automatique).
 - **API locale (named pipe)** pour piloter le changement de jeu/mode depuis
   un Stream Deck, un script AutoHotkey, ou un launcher de jeu tiers.
+- **Chaine de pointeurs dans la GUI** : `pointer_chain` (utile pour les
+  adresses qui bougent a chaque lancement du jeu) n'est editable qu'a la
+  main dans le YAML pour l'instant, pas depuis l'assistant de detection.
+- **Selecteur de fichier natif** dans la GUI pour choisir un `games.yaml`
+  ailleurs que dans le dossier conventionnel a cote de l'exe (actuellement
+  pas de dependance a un plugin de dialogue Tauri, pour rester minimal).
 
 ## Licence
 
-MIT, voir `LICENSE`. Interception (dependance runtime, non redistribuee ici)
-a sa propre licence — voir son depot.
+MIT, voir `LICENSE`, pour le code source d'unisense (`core/`, `app/`,
+`gui/src-tauri/`, `gui/frontend/*.{html,css,js}`).
+
+Composants tiers redistribues (binaires non modifies, licences separees —
+voir chaque NOTICE) :
+- `vendor/interception/` : Interception (LGPL 3.0, usage non commercial —
+  voir `vendor/interception/NOTICE.md`).
+- `gui/frontend/fonts/` : Space Grotesk (SIL OFL 1.1 — voir
+  `gui/frontend/fonts/NOTICE.md`).

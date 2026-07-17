@@ -2,3 +2,6 @@
 config/games.yaml
 *.pdb
 prompt.md
+
+# Regenere automatiquement par tauri-build a chaque compilation.
+gui/src-tauri/gen/

@@ -30,3 +30,8 @@ being free and non-commercial, redistributes the official unmodified
 `vendor/interception/NOTICE.md` and `vendor/interception/LGPL 3.0.txt` for
 the full text and details. This LICENSE (MIT) covers unisense's own source
 code only, not the vendored Interception binaries.
+
+The GUI (`gui/`) also bundles the Space Grotesk typeface
+(https://github.com/floriankarsten/space-grotesk) under the SIL Open Font
+License 1.1 — see `gui/frontend/fonts/NOTICE.md` and
+`gui/frontend/fonts/OFL.txt`.

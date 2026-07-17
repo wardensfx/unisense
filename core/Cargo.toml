@@ -1,0 +1,16 @@
+[package]
+name = "unisense-core"
+description = "Schema de config et calcul du facteur cm/360, partages entre l'app tray et la GUI."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "unisense_core"
+path = "src/lib.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+anyhow = "1"

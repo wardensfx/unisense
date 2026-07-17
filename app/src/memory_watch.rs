@@ -28,7 +28,8 @@ use windows::Win32::System::Diagnostics::ToolHelp::{
 };
 use windows::Win32::System::Threading::{OpenProcess, PROCESS_VM_READ};
 
-use crate::config::AutoDetect;
+use unisense_core::config::AutoDetect;
+
 use crate::state::AppState;
 
 pub fn spawn_watchers(

@@ -5,9 +5,10 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 
+use unisense_core::scaling::AxisAccumulator;
+
 use crate::hotkey::{HotkeySpec, MouseButton};
 use crate::interception::{Interception, InterceptionStroke, MOUSE_MOVE_ABSOLUTE};
-use crate::scaling::AxisAccumulator;
 use crate::state::AppState;
 
 /// Bouton souris configure comme hotkey, avec l'action a executer sur front
