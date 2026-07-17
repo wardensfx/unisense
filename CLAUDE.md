@@ -100,6 +100,45 @@ coercions BOOL/pointeurs) ont ete corrigees en observant les vrais messages
 du compilateur, pas devinees. La GUI a ete verifiee par capture d'ecran
 reelle (PrintWindow + simulation de clics), pas juste "ca devrait marcher".
 
+## Pipeline de release (semver automatique)
+
+Adapte de `OuyouyouTube` (meme pattern release-please), voir
+`.github/workflows/{ci,release-please,publish-release-assets}.yml`,
+`.github/{release.yml,dependabot.yml}`, `release-please-config.json`,
+`.release-please-manifest.json`.
+
+- **`ci.yml`** : build+test+fmt+clippy sur `windows-latest` (le code ne
+  compile pas sur Linux/macOS, c'est du Win32/WebView2). `cargo fmt --check`
+  et `cargo clippy -- -D warnings` sont **bloquants** — le workspace etait
+  fmt/clippy-clean au moment ou ce pipeline a ete ajoute, donc ca ne devrait
+  jamais echouer sur du code deja mergeable proprement.
+- **`release-please.yml`** : tourne sur push vers `main`, lit les commits
+  **Conventional Commits** (`feat:`, `fix:`, `docs:`, `chore:`, etc.) depuis
+  le dernier tag, maintient une PR de release avec `CHANGELOG.md` +
+  bump de version a jour, et cree le tag + GitHub Release quand cette PR est
+  mergee. **La version bumpee est `workspace.package.version` dans le
+  Cargo.toml racine** (extra-file TOML dans `release-please-config.json`),
+  qui cascade aux 3 membres via `version.workspace = true` — pas de version
+  par crate a maintenir separement.
+- **`publish-release-assets.yml`** : dispatche par `release-please.yml` (pas
+  par l'event `release: published` — GITHUB_TOKEN ne redeclenche pas
+  d'autres workflows, meme raison que dans OuyouyouTube). Build release,
+  zippe `unisense.exe` + `interception.dll` + `unisense-gui.exe` +
+  `config/` + `vendor/` + README/LICENSE, attache au GitHub Release.
+- **Important : les commits doivent suivre Conventional Commits** a partir
+  de maintenant pour que le bump de version soit correct
+  (`feat:` -> minor, `fix:` -> patch, `feat!:`/`BREAKING CHANGE:` -> major,
+  `chore:`/`ci:`/`test:`/`build:` -> pas de bump, juste caches dans le
+  changelog). Les commits d'avant l'ajout de ce pipeline ne suivaient pas
+  cette convention — sans consequence, ils sont deja "dans" la base 0.1.0
+  du manifest, release-please ne regarde que ce qui vient apres.
+
+**Pas encore fait cote GitHub** : le depot n'a pas de remote pour l'instant
+(voulu par l'utilisateur). Ces workflows ne tourneront qu'une fois pousses
+sur un repo GitHub avec Actions active. Verifier a ce moment-la : Settings >
+Actions > General > "Allow GitHub Actions to create and approve pull
+requests" doit etre coche, sinon release-please ne peut pas ouvrir sa PR.
+
 ## Pas encore fait / pistes ouvertes
 
 Voir section "Idees d'amelioration" du README (detection de processus au

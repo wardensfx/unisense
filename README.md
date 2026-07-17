@@ -322,6 +322,24 @@ demande.
   ailleurs que dans le dossier conventionnel a cote de l'exe (actuellement
   pas de dependance a un plugin de dialogue Tauri, pour rester minimal).
 
+## Contribuer / versionnage
+
+Le numero de version et le `CHANGELOG.md` sont geres automatiquement par
+[release-please](https://github.com/googleapis/release-please) a partir des
+messages de commit sur `main`, au format
+[Conventional Commits](https://www.conventionalcommits.org/) :
+
+- `feat: ...` -> version mineure
+- `fix: ...` -> version corrective
+- `feat!: ...` / pied `BREAKING CHANGE: ...` -> version majeure
+- `chore:`, `ci:`, `docs:`, `test:`, `build:`, `refactor:`, `perf:` -> pas de
+  bump de version (mais entree de changelog pour `docs`/`perf`/`refactor`)
+
+A chaque release, `.github/workflows/publish-release-assets.yml` compile et
+attache un zip (`unisense.exe` + `interception.dll` + `unisense-gui.exe` +
+`config/` + `vendor/`) au GitHub Release. Voir `CLAUDE.md` pour le detail du
+pipeline.
+
 ## Licence
 
 MIT, voir `LICENSE`, pour le code source d'unisense (`core/`, `app/`,

@@ -1,0 +1,53 @@
+name: Publish release assets
+
+on:
+  # Dispatche explicitement par release-please.yml une fois qu'un release
+  # est reellement cree — voir le commentaire la-bas pour le pourquoi.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag du release a builder et attacher (ex: v0.2.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-upload:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - run: cargo build --release -p unisense -p unisense-gui
+
+      - name: Assemble release archive
+        shell: pwsh
+        run: |
+          $stage = "unisense-${{ inputs.tag }}"
+          New-Item -ItemType Directory -Path $stage | Out-Null
+
+          # unisense.exe + interception.dll (deja copie a cote par
+          # app/build.rs) + la GUI : le necessaire pour lancer l'outil.
+          Copy-Item target/release/unisense.exe $stage/
+          Copy-Item target/release/interception.dll $stage/
+          Copy-Item target/release/unisense-gui.exe $stage/
+
+          # config d'exemple (pas games.yaml, prive/gitignore) + vendor/
+          # (installeur du driver + licences) + doc.
+          Copy-Item -Recurse config $stage/config
+          Copy-Item -Recurse vendor $stage/vendor
+          Copy-Item README.md, LICENSE $stage/
+
+          Compress-Archive -Path $stage -DestinationPath "$stage.zip"
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ inputs.tag }}
+          files: unisense-${{ inputs.tag }}.zip
