@@ -1,0 +1,4 @@
+/target
+config/games.yaml
+*.pdb
+prompt.md

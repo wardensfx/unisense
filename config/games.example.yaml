@@ -1,0 +1,86 @@
+# Config d'exemple pour unisense.
+# Copiez ce fichier vers "games.yaml" a cote de l'executable, puis adaptez-le.
+#
+# IMPORTANT : les constantes `deg_per_count_at_ref` ci-dessous sont des
+# valeurs largement citees publiquement (mouse-sensitivity.com et
+# communautes competitives), MAIS ne sont pas verifiees par ce projet et
+# peuvent devenir fausses apres une mise a jour du jeu qui change sa formule
+# de sensibilite. Avant de vous y fier pour du jeu competitif, verifiez-les
+# vous-meme (methode dans le README, section "Calculer la constante d'un
+# jeu"). Les entrees marquees [EXEMPLE] sont des valeurs illustratives du
+# format attendu, PAS des constantes garanties exactes.
+
+settings:
+  # DPI materiel actuel de votre souris (reglage OSD/logiciel constructeur).
+  # Windows ne peut pas lire cette valeur automatiquement : mettez-la a jour
+  # ici si vous changez le DPI sur la souris.
+  mouse_dpi: 800
+
+  # Cible universelle : cm de deplacement main pour un tour complet (360deg)
+  # de la camera. C'est LA valeur que vous choisissez une fois et qui sera
+  # respectee dans tous les jeux ci-dessous.
+  target_cm_per_360: 35.0
+
+  # Bouton souris pour basculer passthrough <-> dernier jeu actif.
+  # Formats acceptes : "F9", "Ctrl+Alt+F9", "Mouse3" (clic molette),
+  # "Mouse4" (bouton arriere), "Mouse5" (bouton avant).
+  toggle_hotkey: "Mouse4"
+
+  # Fait defiler la liste des jeux ci-dessous (force la sortie du passthrough).
+  cycle_game_hotkey: "Ctrl+Alt+F9"
+
+  # true = demarre en passthrough (recommande : evite une sensi inattendue
+  # tant que vous n'avez pas explicitement selectionne un jeu).
+  start_in_passthrough: true
+
+games:
+  - name: "Valorant"
+    # Constante largement citee pour Valorant (sensibilite in-game = 1).
+    deg_per_count_at_ref: 0.07
+    reference_sensitivity: 1.0
+    source: "https://www.mouse-sensitivity.com/ (a reverifier)"
+
+  - name: "Counter-Strike 2"
+    # Formule Source : deg/count = sensitivity * m_yaw. Valeur ci-dessous
+    # suppose m_yaw par defaut (0.022) et sensitivity in-game = 1.
+    deg_per_count_at_ref: 0.022
+    reference_sensitivity: 1.0
+    source: "https://www.mouse-sensitivity.com/ (a reverifier, verifier m_yaw)"
+
+  - name: "Overwatch 2"
+    deg_per_count_at_ref: 0.0066
+    reference_sensitivity: 1.0
+    source: "https://www.mouse-sensitivity.com/ (a reverifier)"
+
+  - name: "Sea of Thieves"
+    # [EXEMPLE] valeur illustrative, a mesurer/verifier avant usage reel.
+    deg_per_count_at_ref: 1.0
+    reference_sensitivity: 1.0
+    source: "NON VERIFIE - a mesurer (voir README)"
+
+  - name: "Skyrim"
+    # [EXEMPLE] valeur illustrative, a mesurer/verifier avant usage reel.
+    # Beaucoup de jeux Bethesda utilisent un slider en unites "brutes" sans
+    # rapport simple a 1.0 : verifiez la doc de l'INI (fMouseHeadingSensitivity).
+    deg_per_count_at_ref: 0.002
+    reference_sensitivity: 1.0
+    source: "NON VERIFIE - a mesurer (voir README)"
+    # Exemple de hotkey de selection directe pour ce jeu.
+    hotkey: "Ctrl+Alt+F5"
+
+  # Exemple (desactive) de detection automatique menu/gameplay par lecture
+  # memoire, cf. README section "Detection automatique (avancee)".
+  # Decommentez et remplissez avec vos propres offsets trouves via
+  # Cheat Engine : ceux-ci sont a MODIFIER, ils ne fonctionneront pas tels
+  # quels sur votre installation/version du jeu.
+  #
+  # - name: "MonJeu"
+  #   deg_per_count_at_ref: 0.01
+  #   reference_sensitivity: 1.0
+  #   auto_detect:
+  #     process_name: "MonJeu.exe"
+  #     module_name: "MonJeu.exe"
+  #     offset: 0x00ABCDEF
+  #     pointer_chain: []
+  #     in_game_bytes: [0x01]
+  #     poll_interval_ms: 250

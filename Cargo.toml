@@ -1,0 +1,37 @@
+[package]
+name = "unisense"
+version = "0.1.0"
+edition = "2021"
+description = "Normalise la sensibilite de visee souris entre jeux (cm/360 constant), via le driver Interception."
+license = "MIT"
+rust-version = "1.74"
+
+[[bin]]
+name = "unisense"
+path = "src/main.rs"
+
+[profile.release]
+opt-level = 2
+strip = true
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+libloading = "0.8"
+anyhow = "1"
+
+# Bindings Win32 officiels (message loop, tray icon, RegisterHotKey, ReadProcessMemory).
+[dependencies.windows]
+version = "0.58"
+features = [
+    "Win32_Foundation",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Threading",
+    "Win32_System_Diagnostics_Debug",
+    "Win32_System_Diagnostics_ToolHelp",
+    "Win32_System_Memory",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Shell",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_Graphics_Gdi",
+]
