@@ -1,8 +1,8 @@
-# Police embarquee
+# Bundled font
 
-`space-grotesk-variable.woff2` est le fichier variable de **Space Grotesk**
-(Florian Karsten / The Space Grotesk Project Authors), telecharge depuis
-Google Fonts et redistribue ici tel quel, sous licence **SIL Open Font
-License 1.1** (texte integral dans `OFL.txt` a cote de ce fichier).
+`space-grotesk-variable.woff2` is the variable font file for **Space
+Grotesk** (Florian Karsten / The Space Grotesk Project Authors), downloaded
+from Google Fonts and redistributed here as-is, under the **SIL Open Font
+License 1.1** (full text in `OFL.txt` next to this file).
 
-Depot amont : https://github.com/floriankarsten/space-grotesk
+Upstream repo: https://github.com/floriankarsten/space-grotesk

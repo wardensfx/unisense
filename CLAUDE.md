@@ -1,147 +1,147 @@
-# unisense — notes de reprise pour agent/dev
+# unisense — resumption notes for an agent/dev
 
-Outil Windows (Rust) qui normalise la sensibilite de visee souris entre jeux
-via le driver **Interception**. La doc utilisateur complete (installation,
-config, licences, calcul des constantes) est dans `README.md` — ce fichier
-est pour quelqu'un (humain ou agent) qui reprend le **code**, pas l'usage.
+Windows tool (Rust) that normalizes mouse aim sensitivity across games via
+the **Interception** driver. Full user documentation (installation, config,
+licenses, computing constants) is in `README.md` — this file is for
+whoever (human or agent) picks up the **code**, not the usage.
 
-## Etat au dernier commit
+## State as of the last commit
 
-Compile et teste sur cette machine de dev (rustc 1.97, toolchain
-`stable-x86_64-pc-windows-msvc`, installee via `winget install
-Rustlang.Rustup`). `cargo build --workspace`, `cargo test --workspace` et
-`cargo build --workspace --release` passent tous, 7 tests unitaires OK.
+Builds and tests on this dev machine (rustc 1.97, toolchain
+`stable-x86_64-pc-windows-msvc`, installed via `winget install
+Rustlang.Rustup`). `cargo build --workspace`, `cargo test --workspace`, and
+`cargo build --workspace --release` all pass, 7 unit tests OK.
 
-Ce qui n'a **pas** ete teste, faute de moyens dans l'environnement ou le
-code a ete ecrit : le driver Interception n'est pas installe ici (pas de
-`.sys` charge), donc pas de test avec une vraie souris/un vrai jeu. La GUI a
-ete verifiee par capture d'ecran (PrintWindow) et clics simules, pas par un
-humain. Les constantes de sensibilite dans `config/games.example.yaml` sont
-"largement citees" mais pas re-verifiees aupres d'une source primaire pour
-la plupart des jeux (voir avertissements dans le YAML lui-meme et le README).
+What has **not** been tested, for lack of means in the environment where
+the code was written: the Interception driver isn't installed here (no
+`.sys` loaded), so no test with a real mouse/a real game. The GUI was
+verified via screenshot (PrintWindow) and simulated clicks, not by a human.
+The sensitivity constants in `config/games.example.yaml` are "widely cited"
+but not re-verified against a primary source for most games (see the
+warnings in the YAML itself and the README).
 
-## Commandes utiles
+## Useful commands
 
-Rust est installe via rustup dans `~/.cargo` mais **pas dans le PATH** par
-defaut de ce shell — prefixer les commandes :
+Rust is installed via rustup in `~/.cargo` but **not on the PATH** by
+default in this shell — prefix commands with:
 ```powershell
 $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
 ```
 
-- `cargo build --workspace` / `cargo test --workspace` : build/test les 3 membres.
-- `cargo build --release -p unisense` : juste l'app tray (rapide).
-- `cargo build --release -p unisense-gui` : juste la GUI (plus lent, tire Tauri + WebView2).
-- `cargo build --release` (sans `-p`) : build les trois — le plus lent.
-- Pas de `tauri-cli` installe ni necessaire : `cargo build`/`cargo run` sur
-  `unisense-gui` suffisent (pas de `cargo tauri dev/build`).
+- `cargo build --workspace` / `cargo test --workspace`: build/test all 3 members.
+- `cargo build --release -p unisense`: just the tray app (fast).
+- `cargo build --release -p unisense-gui`: just the GUI (slower, pulls in Tauri + WebView2).
+- `cargo build --release` (no `-p`): builds all three — the slowest option.
+- No `tauri-cli` installed or needed: `cargo build`/`cargo run` on
+  `unisense-gui` are enough (no `cargo tauri dev/build`).
 
-## Structure (workspace Cargo, 3 membres)
+## Structure (Cargo workspace, 3 members)
 
-- `core/` — lib `unisense-core` : schema de config (serde) + calcul du
-  facteur cm/360 (`scaling.rs`, teste). **Zero dependance Win32** ici,
-  gardee portable expres pour rester partageable entre `app` et `gui`.
-- `app/` — l'executable tray (`unisense.exe`). Capture Interception,
-  hotkeys clavier (RegisterHotKey) / souris (dans le flux Interception lui
-  meme), systray en Win32 pur (pas de framework GUI, une seule fenetre
-  invisible + message loop).
-- `gui/src-tauri/` + `gui/frontend/` — GUI Tauri v2 de configuration.
-  Frontend HTML/CSS/JS **vanilla, sans bundler ni npm** (fichiers statiques
-  servis directement par Tauri). `withGlobalTauri: true` dans
-  `tauri.conf.json` pour avoir `window.__TAURI__` sans import ES module.
-- `vendor/interception/` — DLL utilisateur + installeur du driver,
-  redistribues tels quels (LGPL 3.0, cf `NOTICE.md` dedans). `app/build.rs`
-  copie le DLL a cote de l'exe a chaque build (voir OUT_DIR ancestors(3)
-  pour trouver `target/<profile>/`).
+- `core/` — `unisense-core` lib: config schema (serde) + cm/360 factor
+  calculation (`scaling.rs`, tested). **Zero Win32 dependency** here,
+  deliberately kept portable so it stays shareable between `app` and `gui`.
+- `app/` — the tray executable (`unisense.exe`). Interception capture,
+  keyboard hotkeys (RegisterHotKey) / mouse hotkeys (in the Interception
+  stream itself), pure Win32 systray (no GUI framework, a single invisible
+  window + message loop).
+- `gui/src-tauri/` + `gui/frontend/` — Tauri v2 configuration GUI. **Vanilla
+  HTML/CSS/JS frontend, no bundler or npm** (static files served directly
+  by Tauri). `withGlobalTauri: true` in `tauri.conf.json` to get
+  `window.__TAURI__` without an ES module import.
+- `vendor/interception/` — user-mode DLL + driver installer, redistributed
+  as-is (LGPL 3.0, see `NOTICE.md` inside). `app/build.rs` copies the DLL
+  next to the exe on every build (see OUT_DIR ancestors(3) to find
+  `target/<profile>/`).
 
-## Decisions et pourquoi (pour ne pas les redefaire / redebattre)
+## Decisions and why (so they don't get redone / re-litigated)
 
-- **Chargement dynamique de `interception.dll`** via `libloading`, pas de
-  lien statique contre `interception.lib` : evite d'avoir besoin du SDK au
-  moment du build, et permet a un utilisateur de remplacer le DLL sans
-  recompiler unisense — important pour la conformite LGPL (cf
-  `vendor/interception/NOTICE.md`), pas juste une commodite.
-- **Tauri plutot qu'egui** pour la GUI : choix explicite fait par
-  l'utilisateur (compare via AskUserQuestion), au prix d'une dependance
-  WebView2 (presente par defaut sur Windows 11) contre un plafond
-  esthetique plus haut que de l'immediate-mode Rust pur.
-- **Licence d'Interception** : dual LGPL 3.0 (usage non commercial) /
-  licence commerciale separee — verifie en allant lire les fichiers de
-  licence du depot amont (`licenses/non-commercial-usage/LGPL 3.0.txt`),
-  pas suppose a priori. Ma premiere version du README avait affirme a tort
-  "BSD-3-Clause" de memoire ; corrige apres verification. **Toujours
-  verifier la licence exacte d'un binaire tiers avant de le vendoriser**,
-  ne pas la deviner.
-- **Detection auto (5.2) sans offsets pre-remplis** : deliberement laisse
-  vide pour tout jeu dans la config d'exemple — je n'ai pas d'offsets
-  memoire verifies pour un jeu quelconque, en fournir de faux serait
-  trompeur. L'assistant de scan memoire dans la GUI sert a ce que
-  l'utilisateur les trouve lui-meme.
+- **Dynamic loading of `interception.dll`** via `libloading`, no static
+  linking against `interception.lib`: avoids needing the SDK at build time,
+  and lets a user replace the DLL without recompiling unisense — important
+  for LGPL compliance (see `vendor/interception/NOTICE.md`), not just a
+  convenience.
+- **Tauri rather than egui** for the GUI: an explicit choice made by the
+  user (compared via AskUserQuestion), at the cost of a WebView2 dependency
+  (present by default on Windows 11) in exchange for a higher visual
+  ceiling than pure-Rust immediate-mode.
+- **Interception's license**: dual LGPL 3.0 (non-commercial use) /
+  separate commercial license — verified by actually reading the license
+  files in the upstream repo (`licenses/non-commercial-usage/LGPL
+  3.0.txt`), not assumed upfront. My first pass at the README had
+  incorrectly claimed "BSD-3-Clause" from memory; corrected after
+  verification. **Always verify a third-party binary's exact license
+  before vendoring it**, don't guess.
+- **Auto-detection (5.2) with no pre-filled offsets**: deliberately left
+  empty for every game in the example config — I don't have verified
+  memory offsets for any given game, and shipping fake ones would be
+  misleading. The memory-scan assistant in the GUI exists so the user can
+  find their own.
 
-## Piege CSS rencontre (pour ne pas le refaire)
+## CSS pitfall hit (so it doesn't happen again)
 
-Dans `gui/frontend/style.css`, des regles comme
-`.drawer/.games-grid/.empty-state { display: flex|grid }` ont la **meme
-specificite** que `[hidden]` et gagnent la cascade (regle d'auteur bat regle
-UA a specificite egale) → l'attribut `hidden` etait silencieusement ignore
-(le tiroir d'edition restait visible en permanence des le chargement).
-Corrige par une regle globale en tete de fichier :
+In `gui/frontend/style.css`, rules like
+`.drawer/.games-grid/.empty-state { display: flex|grid }` have the **same
+specificity** as `[hidden]` and win the cascade (author rule beats UA rule
+at equal specificity) → the `hidden` attribute was being silently ignored
+(the edit drawer stayed visible at all times right from load). Fixed with a
+global rule at the top of the file:
 ```css
 [hidden] { display: none !important; }
 ```
-Si un nouvel element toggle via `el.hidden = true/false` en JS ne se cache
-pas, c'est probablement ce piege qui revient.
+If a new element toggled via `el.hidden = true/false` in JS doesn't hide,
+this is probably the pitfall resurfacing.
 
-## Verification faite cette session (pour calibrer la confiance)
+## Verification done this session (to calibrate confidence)
 
-Rust n'etait pas installe au debut de la session ; installe via winget pour
-pouvoir reellement compiler/tester au lieu de livrer du code non verifie.
-Toutes les erreurs de compilation rencontrees (bindings Win32, macros,
-coercions BOOL/pointeurs) ont ete corrigees en observant les vrais messages
-du compilateur, pas devinees. La GUI a ete verifiee par capture d'ecran
-reelle (PrintWindow + simulation de clics), pas juste "ca devrait marcher".
+Rust wasn't installed at the start of the session; installed via winget to
+actually compile/test instead of shipping unverified code. Every compile
+error hit (Win32 bindings, macros, BOOL/pointer coercions) was fixed by
+looking at the compiler's actual messages, not guessed. The GUI was
+verified via real screenshots (PrintWindow + simulated clicks), not just
+"this should work."
 
-## Pipeline de release (semver automatique)
+## Release pipeline (automatic semver)
 
-Adapte de `OuyouyouTube` (meme pattern release-please), voir
+Adapted from `OuyouyouTube` (same release-please pattern), see
 `.github/workflows/{ci,release-please,publish-release-assets}.yml`,
 `.github/{release.yml,dependabot.yml}`, `release-please-config.json`,
 `.release-please-manifest.json`.
 
-- **`ci.yml`** : build+test+fmt+clippy sur `windows-latest` (le code ne
-  compile pas sur Linux/macOS, c'est du Win32/WebView2). `cargo fmt --check`
-  et `cargo clippy -- -D warnings` sont **bloquants** — le workspace etait
-  fmt/clippy-clean au moment ou ce pipeline a ete ajoute, donc ca ne devrait
-  jamais echouer sur du code deja mergeable proprement.
-- **`release-please.yml`** : tourne sur push vers `main`, lit les commits
-  **Conventional Commits** (`feat:`, `fix:`, `docs:`, `chore:`, etc.) depuis
-  le dernier tag, maintient une PR de release avec `CHANGELOG.md` +
-  bump de version a jour, et cree le tag + GitHub Release quand cette PR est
-  mergee. **La version bumpee est `workspace.package.version` dans le
-  Cargo.toml racine** (extra-file TOML dans `release-please-config.json`),
-  qui cascade aux 3 membres via `version.workspace = true` — pas de version
-  par crate a maintenir separement.
-- **`publish-release-assets.yml`** : dispatche par `release-please.yml` (pas
-  par l'event `release: published` — GITHUB_TOKEN ne redeclenche pas
-  d'autres workflows, meme raison que dans OuyouyouTube). Build release,
-  zippe `unisense.exe` + `interception.dll` + `unisense-gui.exe` +
-  `config/` + `vendor/` + README/LICENSE, attache au GitHub Release.
-- **Important : les commits doivent suivre Conventional Commits** a partir
-  de maintenant pour que le bump de version soit correct
-  (`feat:` -> minor, `fix:` -> patch, `feat!:`/`BREAKING CHANGE:` -> major,
-  `chore:`/`ci:`/`test:`/`build:` -> pas de bump, juste caches dans le
-  changelog). Les commits d'avant l'ajout de ce pipeline ne suivaient pas
-  cette convention — sans consequence, ils sont deja "dans" la base 0.1.0
-  du manifest, release-please ne regarde que ce qui vient apres.
+- **`ci.yml`**: build+test+fmt+clippy on `windows-latest` (the code doesn't
+  compile on Linux/macOS, it's Win32/WebView2). `cargo fmt --check` and
+  `cargo clippy -- -D warnings` are **blocking** — the workspace was
+  fmt/clippy-clean at the time this pipeline was added, so it should never
+  fail on code that was already cleanly mergeable.
+- **`release-please.yml`**: runs on push to `main`, reads **Conventional
+  Commits** (`feat:`, `fix:`, `docs:`, `chore:`, etc.) since the last tag,
+  maintains a release PR with an up-to-date `CHANGELOG.md` + version bump,
+  and creates the tag + GitHub Release once that PR is merged. **The
+  version being bumped is `workspace.package.version` in the root
+  Cargo.toml** (TOML extra-file in `release-please-config.json`), which
+  cascades to all 3 members via `version.workspace = true` — no per-crate
+  version to maintain separately.
+- **`publish-release-assets.yml`**: dispatched by `release-please.yml`
+  (not by the `release: published` event — `GITHUB_TOKEN` doesn't
+  re-trigger other workflows, same reasoning as in OuyouyouTube). Builds a
+  release, zips `unisense.exe` + `interception.dll` + `unisense-gui.exe` +
+  `config/` + `vendor/` + README/LICENSE, attaches it to the GitHub
+  Release.
+- **Important: commits must follow Conventional Commits** from now on for
+  the version bump to be correct (`feat:` -> minor, `fix:` -> patch,
+  `feat!:`/`BREAKING CHANGE:` -> major, `chore:`/`ci:`/`test:`/`build:` ->
+  no bump, just tucked into the changelog). Commits from before this
+  pipeline was added didn't follow this convention — no consequence, they're
+  already "inside" the manifest's 0.1.0 baseline; release-please only looks
+  at what comes after.
 
-**Pas encore fait cote GitHub** : le depot n'a pas de remote pour l'instant
-(voulu par l'utilisateur). Ces workflows ne tourneront qu'une fois pousses
-sur un repo GitHub avec Actions active. Verifier a ce moment-la : Settings >
-Actions > General > "Allow GitHub Actions to create and approve pull
-requests" doit etre coche, sinon release-please ne peut pas ouvrir sa PR.
+**GitHub-side setup**: the remote is `git@github.com:wardensfx/unisense.git`.
+Once pushed with Actions enabled, check: Settings > Actions > General >
+"Allow GitHub Actions to create and approve pull requests" must be checked,
+otherwise release-please can't open its PR.
 
-## Pas encore fait / pistes ouvertes
+## Not done yet / open threads
 
-Voir section "Idees d'amelioration" du README (detection de processus au
-premier plan, rechargement a chaud du YAML, overlay d'etat a l'ecran,
-multi-souris, installeur, API locale, chaine de pointeurs dans la GUI,
-selecteur de fichier natif). Rien de tout ca n'est commence.
+See the README's "Ideas for improvement" section (foreground-process
+detection, YAML hot-reload, on-screen status overlay, multiple mice,
+installer, local API, pointer chain in the GUI, native file picker). None
+of it has been started.

@@ -1,85 +1,85 @@
-# Config d'exemple pour unisense.
-# Copiez ce fichier vers "games.yaml" a cote de l'executable, puis adaptez-le.
+# Example config for unisense.
+# Copy this file to "games.yaml" next to the executable, then adapt it.
 #
-# IMPORTANT : les constantes `deg_per_count_at_ref` ci-dessous sont des
-# valeurs largement citees publiquement (mouse-sensitivity.com et
-# communautes competitives), MAIS ne sont pas verifiees par ce projet et
-# peuvent devenir fausses apres une mise a jour du jeu qui change sa formule
-# de sensibilite. Avant de vous y fier pour du jeu competitif, verifiez-les
-# vous-meme (methode dans le README, section "Calculer la constante d'un
-# jeu"). Les entrees marquees [EXEMPLE] sont des valeurs illustratives du
-# format attendu, PAS des constantes garanties exactes.
+# IMPORTANT: the `deg_per_count_at_ref` constants below are values widely
+# cited publicly (mouse-sensitivity.com and competitive communities), BUT
+# they are NOT verified by this project and may become wrong after a game
+# update changes its sensitivity formula. Before relying on them for
+# competitive play, verify them yourself (method in the README, section
+# "Computing a new game's constant"). Entries marked [EXAMPLE] are
+# illustrative values showing the expected format, NOT guaranteed-accurate
+# constants.
 
 settings:
-  # DPI materiel actuel de votre souris (reglage OSD/logiciel constructeur).
-  # Windows ne peut pas lire cette valeur automatiquement : mettez-la a jour
-  # ici si vous changez le DPI sur la souris.
+  # Current hardware DPI of your mouse (vendor OSD/software setting).
+  # Windows cannot read this value automatically: update it here if you
+  # change the DPI on the mouse.
   mouse_dpi: 800
 
-  # Cible universelle : cm de deplacement main pour un tour complet (360deg)
-  # de la camera. C'est LA valeur que vous choisissez une fois et qui sera
-  # respectee dans tous les jeux ci-dessous.
+  # Universal target: cm of hand movement for one full turn (360deg) of the
+  # camera. This is THE value you pick once and that will be honored across
+  # every game below.
   target_cm_per_360: 35.0
 
-  # Bouton souris pour basculer passthrough <-> dernier jeu actif.
-  # Formats acceptes : "F9", "Ctrl+Alt+F9", "Mouse3" (clic molette),
-  # "Mouse4" (bouton arriere), "Mouse5" (bouton avant).
+  # Mouse button to toggle passthrough <-> last active game.
+  # Accepted formats: "F9", "Ctrl+Alt+F9", "Mouse3" (middle click),
+  # "Mouse4" (back button), "Mouse5" (forward button).
   toggle_hotkey: "Mouse4"
 
-  # Fait defiler la liste des jeux ci-dessous (force la sortie du passthrough).
+  # Cycles through the games listed below (forces leaving passthrough).
   cycle_game_hotkey: "Ctrl+Alt+F9"
 
-  # true = demarre en passthrough (recommande : evite une sensi inattendue
-  # tant que vous n'avez pas explicitement selectionne un jeu).
+  # true = start in passthrough (recommended: avoids an unexpected
+  # sensitivity until you've explicitly selected a game).
   start_in_passthrough: true
 
 games:
   - name: "Valorant"
-    # Constante largement citee pour Valorant (sensibilite in-game = 1).
+    # Widely cited constant for Valorant (in-game sensitivity = 1).
     deg_per_count_at_ref: 0.07
     reference_sensitivity: 1.0
-    source: "https://www.mouse-sensitivity.com/ (a reverifier)"
+    source: "https://www.mouse-sensitivity.com/ (double-check)"
 
   - name: "Counter-Strike 2"
-    # Formule Source : deg/count = sensitivity * m_yaw. Valeur ci-dessous
-    # suppose m_yaw par defaut (0.022) et sensitivity in-game = 1.
+    # Source engine formula: deg/count = sensitivity * m_yaw. The value
+    # below assumes the default m_yaw (0.022) and in-game sensitivity = 1.
     deg_per_count_at_ref: 0.022
     reference_sensitivity: 1.0
-    source: "https://www.mouse-sensitivity.com/ (a reverifier, verifier m_yaw)"
+    source: "https://www.mouse-sensitivity.com/ (double-check, verify m_yaw)"
 
   - name: "Overwatch 2"
     deg_per_count_at_ref: 0.0066
     reference_sensitivity: 1.0
-    source: "https://www.mouse-sensitivity.com/ (a reverifier)"
+    source: "https://www.mouse-sensitivity.com/ (double-check)"
 
   - name: "Sea of Thieves"
-    # [EXEMPLE] valeur illustrative, a mesurer/verifier avant usage reel.
+    # [EXAMPLE] illustrative value, measure/verify before real use.
     deg_per_count_at_ref: 1.0
     reference_sensitivity: 1.0
-    source: "NON VERIFIE - a mesurer (voir README)"
+    source: "UNVERIFIED - needs measuring (see README)"
 
   - name: "Skyrim"
-    # [EXEMPLE] valeur illustrative, a mesurer/verifier avant usage reel.
-    # Beaucoup de jeux Bethesda utilisent un slider en unites "brutes" sans
-    # rapport simple a 1.0 : verifiez la doc de l'INI (fMouseHeadingSensitivity).
+    # [EXAMPLE] illustrative value, measure/verify before real use.
+    # Many Bethesda games use a slider in "raw" units with no simple
+    # relationship to 1.0: check the INI docs (fMouseHeadingSensitivity).
     deg_per_count_at_ref: 0.002
     reference_sensitivity: 1.0
-    source: "NON VERIFIE - a mesurer (voir README)"
-    # Exemple de hotkey de selection directe pour ce jeu.
+    source: "UNVERIFIED - needs measuring (see README)"
+    # Example direct-select hotkey for this game.
     hotkey: "Ctrl+Alt+F5"
 
-  # Exemple (desactive) de detection automatique menu/gameplay par lecture
-  # memoire, cf. README section "Detection automatique (avancee)".
-  # Decommentez et remplissez avec vos propres offsets trouves via
-  # Cheat Engine : ceux-ci sont a MODIFIER, ils ne fonctionneront pas tels
-  # quels sur votre installation/version du jeu.
+  # Example (disabled) of automatic menu/gameplay detection via memory
+  # reading, see README section "Automatic detection (advanced)".
+  # Uncomment and fill in with your own offsets found via Cheat Engine:
+  # these must be CHANGED, they will not work as-is on your
+  # installation/version of the game.
   #
-  # - name: "MonJeu"
+  # - name: "MyGame"
   #   deg_per_count_at_ref: 0.01
   #   reference_sensitivity: 1.0
   #   auto_detect:
-  #     process_name: "MonJeu.exe"
-  #     module_name: "MonJeu.exe"
+  #     process_name: "MyGame.exe"
+  #     module_name: "MyGame.exe"
   #     offset: 0x00ABCDEF
   #     pointer_chain: []
   #     in_game_bytes: [0x01]

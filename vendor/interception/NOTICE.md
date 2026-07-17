@@ -1,42 +1,42 @@
-# Provenance et licence des fichiers de ce dossier
+# Provenance and license of the files in this folder
 
-Ces fichiers sont redistribues tels quels depuis la release officielle
-`v1.0.1` du projet **Interception** :
+These files are redistributed as-is from the official `v1.0.1` release of
+the **Interception** project:
 
-- Depot : https://github.com/oblitum/Interception
-- Release : https://github.com/oblitum/Interception/releases/tag/v1.0.1
-- Fichier source : `library/x64/interception.dll` (et `command line
-  installer/install-interception.exe`) de l'archive `Interception.zip`
-  publiee a cette release.
+- Repository: https://github.com/oblitum/Interception
+- Release: https://github.com/oblitum/Interception/releases/tag/v1.0.1
+- Source file: `library/x64/interception.dll` (and `command line
+  installer/install-interception.exe`) from the `Interception.zip` archive
+  published at that release.
 
-Aucun de ces binaires n'a ete modifie.
+None of these binaries have been modified.
 
-## Licence
+## License
 
-Interception est en double licence :
+Interception is dual-licensed:
 
-- **Usage commercial** : licence separee, voir
-  `licenses/commercial-usage/` dans le depot amont (non applicable ici).
-- **Usage non commercial** : **LGPL 3.0**, voir `licenses/non-commercial-usage/LGPL 3.0.txt`
-  dans le depot amont (texte integral reproduit dans `LGPL 3.0.txt` a cote
-  de ce fichier).
+- **Commercial use**: separate license, see `licenses/commercial-usage/`
+  in the upstream repo (not applicable here).
+- **Non-commercial use**: **LGPL 3.0**, see
+  `licenses/non-commercial-usage/LGPL 3.0.txt` in the upstream repo (full
+  text reproduced in `LGPL 3.0.txt` next to this file).
 
-unisense est un outil gratuit et non commercial (licence MIT, voir
-`LICENSE` a la racine du depot) : c'est donc la voie **LGPL 3.0** qui
-s'applique a la redistribution de `interception.dll` faite ici.
+unisense is a free, non-commercial tool (MIT license, see `LICENSE` at the
+repo root): the **LGPL 3.0** track is therefore what applies to the
+redistribution of `interception.dll` done here.
 
-`interception.dll` reste un composant distinct sous LGPL 3.0, separe du
-code source d'unisense (MIT). Conformement a la LGPL :
+`interception.dll` remains a distinct LGPL 3.0 component, separate from
+unisense's own (MIT) source code. Per the LGPL:
 
-- Le code source correspondant est publiquement et durablement disponible
-  a l'adresse ci-dessus (depot amont officiel, release v1.0.1).
-- unisense charge `interception.dll` **dynamiquement au runtime**
-  (`libloading`, pas de lien statique / pas de `interception.lib` embarque
-  dans le binaire d'unisense) : un utilisateur peut donc remplacer ce
-  fichier par sa propre version (recompilee ou modifiee) de la
-  bibliotheque sans avoir a recompiler unisense, ce qui satisfait
-  l'exigence de "remplacement de la bibliotheque" de la LGPL.
+- The corresponding source is publicly and durably available at the
+  address above (official upstream repo, release v1.0.1).
+- unisense loads `interception.dll` **dynamically at runtime**
+  (`libloading`, no static linking / no `interception.lib` embedded in
+  unisense's binary): a user can therefore replace this file with their
+  own (recompiled or modified) version of the library without having to
+  recompile unisense, which satisfies the LGPL's "library replacement"
+  requirement.
 
-Le driver noyau (`install-interception.exe`, qui installe le `.sys`) est
-inclus ici uniquement par commodite d'installation ; voir le README a la
-racine du depot pour la procedure.
+The kernel driver (`install-interception.exe`, which installs the `.sys`)
+is included here purely for install convenience; see the README at the
+repo root for the procedure.

@@ -1,116 +1,113 @@
 # unisense
 
-Normalise la sensibilite de visee souris entre jeux : vous definissez **une
-seule cible universelle** (cm de deplacement main pour 360°), et unisense
-calcule et applique le facteur d'echelle qui la respecte dans chaque jeu
-configure, quel que soit le DPI de la souris ou l'echelle de sensi interne du
-jeu.
+Normalizes mouse aim sensitivity across games: you set **one universal
+target** (cm of hand movement per 360°), and unisense computes and applies
+the scaling factor that honors it in every configured game, regardless of
+mouse DPI or that game's internal sensitivity scale.
 
-## Intention du projet
+![unisense GUI — configured games grid](docs/screenshots/games-grid.png)
 
-Aucun standard commun n'existe entre jeux pour la sensibilite de visee : un
-"3" dans un jeu ne veut rien dire dans un autre, et retrouver "sa" sensi
-d'un jeu a l'autre est une corvee manuelle sujette a erreur. unisense est un
-outil de **confort et d'accessibilite** : il ne donne aucun avantage qu'un
-joueur ne pourrait pas obtenir en calculant lui-meme le bon reglage a la
-main (ce que font deja des sites comme mouse-sensitivity.com) ; il
-automatise juste le calcul et son application. Aucune fonctionnalite de
-triche (aimbot, ESP, macro de recul, etc.) n'est dans le perimetre du
-projet et n'y sera jamais ajoutee.
+## Project intent
 
-## ⚠️ Avertissement important : anti-cheats a niveau noyau
+There is no common standard between games for aim sensitivity: a "3" in one
+game means nothing in another, and re-finding "your" sensitivity from one
+game to the next is an error-prone manual chore. unisense is a **comfort and
+accessibility** tool: it gives no advantage a player couldn't already get by
+computing the right setting by hand (which sites like
+mouse-sensitivity.com already let you do) — it just automates the
+calculation and its application. No cheat functionality (aimbot, ESP,
+recoil macros, etc.) is in scope for this project and never will be.
 
-unisense s'appuie sur le driver **Interception**, un driver noyau Windows.
-De nombreux outils d'accessibilite/confort legitimes l'utilisent, mais
-**certains anti-cheats a niveau noyau (Riot Vanguard pour Valorant, certains
-modes de BattlEye/EAC) detectent et interdisent activement la presence de
-drivers d'interception d'entree tiers**, meme sans intention de triche, et
-peuvent entrainer un bannissement. Avant d'utiliser unisense sur un jeu
-donne :
+## ⚠️ Important warning: kernel-level anti-cheats
 
-- Verifiez la politique de l'anti-cheat du jeu concernant les drivers
-  d'entree tiers / les logiciels de remapping bas niveau.
-- En cas de doute, **ne l'utilisez pas** sur ce jeu, ou testez d'abord sur un
-  compte secondaire.
-- Les auteurs de ce projet ne sont pas responsables des consequences
-  (bannissement, etc.) de son usage sur un jeu dont l'anti-cheat l'interdit.
+unisense relies on the **Interception** driver, a Windows kernel driver.
+Many legitimate accessibility/comfort tools use it, but **some kernel-level
+anti-cheats (Riot Vanguard for Valorant, some BattlEye/EAC modes) actively
+detect and ban third-party input-interception drivers**, even with no
+cheating intent, and can result in a ban. Before using unisense on a given
+game:
 
-## Comment ca marche
+- Check that game's anti-cheat policy regarding third-party input drivers /
+  low-level remapping software.
+- If in doubt, **don't use it** on that game, or test on a secondary account
+  first.
+- The authors of this project are not responsible for the consequences
+  (bans, etc.) of using it on a game whose anti-cheat forbids it.
 
-1. Un thread dedie ouvre un contexte **Interception** et capture les rapports
-   HID bruts de la souris, en amont de RawInput, des ballistics Windows et de
-   toute mise a l'echelle DPI-aware du bureau.
-2. Pour le jeu actif, unisense connait une constante publique
-   (`deg_per_count_at_ref`, "degres de rotation camera par compte de souris
-   brut, mesures a une sensibilite in-game de reference documentee").
-3. A partir du DPI materiel declare, de cette constante, et de votre cible
-   `target_cm_per_360`, unisense calcule un facteur multiplicatif.
-4. Ce facteur est applique aux deltas X/Y bruts (multiplication lineaire
-   simple, aucune courbe d'acceleration ajoutee), puis les deltas modifies
-   sont reinjectes via Interception, indiscernables pour le jeu d'un
-   mouvement natif de la souris.
-5. Un hotkey (clavier ou bouton souris) bascule entre **passthrough**
-   (facteur 1.0, pour les menus/le bureau) et **jeu actif**. La selection du
-   jeu se fait via l'icone systray ou un raccourci clavier — pas de detection
-   automatique de processus par defaut.
+## How it works
 
-Le calcul complet est documente et teste dans `src/scaling.rs`.
+1. A dedicated thread opens an **Interception** context and captures raw
+   mouse HID reports, upstream of RawInput, Windows ballistics, and any
+   desktop DPI-aware scaling.
+2. For the active game, unisense knows a public constant
+   (`deg_per_count_at_ref`, "camera rotation degrees per raw mouse count,
+   measured at a documented reference in-game sensitivity").
+3. From the declared hardware DPI, that constant, and your
+   `target_cm_per_360` target, unisense computes a multiplicative factor.
+4. That factor is applied to the raw X/Y deltas (simple linear
+   multiplication, no acceleration curve added), then the modified deltas
+   are re-injected via Interception, indistinguishable to the game from
+   native mouse movement.
+5. A hotkey (keyboard or mouse button) toggles between **passthrough**
+   (factor 1.0, for menus/desktop) and **active game**. Game selection
+   happens via the tray icon or a keyboard shortcut — no automatic process
+   detection by default.
+
+The full calculation is documented and tested in `core/src/scaling.rs`.
 
 ## Installation
 
-Le DLL utilisateur d'Interception (`interception.dll`) et l'installeur du
-driver noyau sont **embarques dans ce depot** sous `vendor/interception/`
-(binaires officiels non modifies, redistribues sous LGPL 3.0 — voir
-`vendor/interception/NOTICE.md`) : pas besoin d'aller les telecharger sur
-GitHub separement.
+Interception's user-mode DLL (`interception.dll`) and the kernel driver
+installer are **bundled in this repo** under `vendor/interception/`
+(unmodified official binaries, redistributed under LGPL 3.0 — see
+`vendor/interception/NOTICE.md`): no need to go download them from GitHub
+separately.
 
-### 1. Driver Interception (obligatoire, etape systeme)
+### 1. Interception driver (required, system-level step)
 
-1. Ouvrez une invite de commande **en administrateur** dans
-   `vendor/interception/` et lancez :
+1. Open a command prompt **as administrator** in `vendor/interception/` and
+   run:
    ```
    install-interception.exe /install
    ```
-2. **Redemarrez Windows** (le driver se charge au boot, l'installation seule
-   ne suffit pas).
+2. **Restart Windows** (the driver loads at boot; installing alone isn't
+   enough).
 
-Pour desinstaller plus tard : `install-interception.exe /uninstall` puis
-redemarrer.
+To uninstall later: `install-interception.exe /uninstall`, then restart.
 
-### 2. Compiler unisense
+### 2. Build unisense
 
-Prerequis : [Rust](https://rustup.rs/) (edition 2021+), toolchain MSVC
-(`rustup default stable-x86_64-pc-windows-msvc`). Le depot est un workspace
-Cargo a trois membres : `core` (logique partagee), `app` (l'executable tray,
-celui decrit ci-dessus) et `gui` (l'interface de configuration, voir plus
-bas).
+Prerequisites: [Rust](https://rustup.rs/) (edition 2021+), MSVC toolchain
+(`rustup default stable-x86_64-pc-windows-msvc`). The repo is a 3-member
+Cargo workspace: `core` (shared logic), `app` (the tray executable
+described above), and `gui` (the configuration UI, see below).
 
 ```
 cargo build --release -p unisense
 ```
 
-`app/build.rs` copie automatiquement `vendor/interception/interception.dll`
-a cote de l'executable genere (`target/release/unisense.exe`) a chaque
-build : rien a faire manuellement pour ce fichier. Copiez juste l'exe, le
-DLL a cote (deja fait par le build), et le dossier `config/` la ou vous
-voulez l'executer.
+`app/build.rs` automatically copies `vendor/interception/interception.dll`
+next to the generated executable (`target/release/unisense.exe`) on every
+build: nothing to do manually for that file. Just copy the exe, the DLL
+next to it (already done by the build), and the `config/` folder wherever
+you want to run it.
 
-(`cargo build --release` sans `-p` compile aussi la GUI en plus — plus long,
-et necessite le runtime WebView2, present par defaut sur Windows 11.)
+(`cargo build --release` without `-p` also builds the GUI — slower, and
+requires the WebView2 runtime, present by default on Windows 11.)
 
-> unisense doit generalement etre lance **en administrateur** : le driver
-> Interception refuse `interception_create_context()` sinon.
+> unisense generally needs to run **as administrator**: the Interception
+> driver refuses `interception_create_context()` otherwise.
 
 ### 3. Configuration
 
-Copiez `config/games.example.yaml` vers `config/games.yaml` (a cote de
-l'executable) et editez-le :
+Copy `config/games.example.yaml` to `config/games.yaml` (next to the
+executable) and edit it:
 
 ```yaml
 settings:
-  mouse_dpi: 800              # DPI actuel regle sur votre souris
-  target_cm_per_360: 35.0     # votre cible universelle
-  toggle_hotkey: "Mouse4"     # passthrough <-> dernier jeu actif
+  mouse_dpi: 800              # current DPI set on your mouse
+  target_cm_per_360: 35.0     # your universal target
+  toggle_hotkey: "Mouse4"     # passthrough <-> last active game
   cycle_game_hotkey: "Ctrl+Alt+F9"
   start_in_passthrough: true
 
@@ -120,234 +117,235 @@ games:
     reference_sensitivity: 1.0
 ```
 
-`unisense.exe chemin\vers\config.yaml` permet de surcharger le fichier de
-config utilise (utile pour plusieurs profils).
+`unisense.exe path\to\config.yaml` lets you override which config file is
+used (handy for multiple profiles).
 
-### 4. Regler le jeu
+### 4. Set up the game
 
-Dans les options du jeu, mettez sa sensibilite in-game exactement sur la
-valeur `reference_sensitivity` documentee (souvent `1.0`). C'est unisense,
-et non le jeu, qui fait ensuite tout le travail d'echelle. Si le jeu ne
-permet pas de saisir cette valeur exacte (slider a crans), renseignez la
-valeur reellement utilisee dans `current_sensitivity` (voir commentaires
-dans `config.rs` / le YAML) — **uniquement valable si la formule de
-sensibilite du jeu est lineaire**, ce qui est vrai pour la plupart des
-moteurs Source/Quake/Unreal/idTech mais faux pour certains jeux (Minecraft
-par exemple a une courbe cubique).
+In the game's options, set its in-game sensitivity to exactly the
+documented `reference_sensitivity` value (often `1.0`). unisense, not the
+game, then does all the scaling work. If the game doesn't let you enter
+that exact value (stepped slider), put the value actually used in
+`current_sensitivity` (see comments in `config.rs` / the YAML) — **only
+valid if the game's sensitivity formula is linear**, which is true for most
+Source/Quake/Unreal/idTech engines but false for some games (Minecraft, for
+instance, has a cubic curve).
 
-## Interface graphique de configuration (optionnelle)
+## Configuration GUI (optional)
 
-Editer `games.yaml` a la main fonctionne, mais un second executable,
-`unisense-gui`, offre une interface pour le faire sans toucher au YAML :
-ajout/suppression de jeux, chargement de la config d'exemple en un clic, et
-un assistant pour l'`auto_detect` (5.2). Elle lit/ecrit exactement le meme
-`config/games.yaml` que l'app tray (a cote de son propre executable — placez
-les deux .exe dans le meme dossier).
+Hand-editing `games.yaml` works, but a second executable, `unisense-gui`,
+provides an interface to do it without touching the YAML: add/remove
+games, load the example config in one click, and an assistant for
+`auto_detect` (5.2). It reads/writes the exact same `config/games.yaml` as
+the tray app (next to its own executable — put both `.exe` files in the
+same folder).
 
 ```
 cargo build --release -p unisense-gui
 ```
 
-`target/release/unisense-gui.exe` — inutile de le lancer en administrateur
-(sauf pour lire la memoire d'un jeu protege par un anti-cheat qui l'exige).
+`target/release/unisense-gui.exe` — no need to run it as administrator
+(except to read the memory of a game whose anti-cheat requires it).
 
-Fonctionnalites :
+![unisense GUI — empty state, first launch](docs/screenshots/empty-state.png)
 
-- Cadran de calibration : cible cm/360° et DPI, avec un apercu du facteur
-  applique a chaque jeu de la liste (badge `×0.xx`) mis a jour en direct.
-- Cartes de jeux : ajout, edition, suppression ; previsualisation du facteur
-  pendant la saisie de la constante.
-- **Charger l'exemple** : recharge le contenu de `games.example.yaml`
-  (embarque dans le binaire au moment de la compilation, aucun acces
-  reseau) comme point de depart.
-- **Assistant de detection automatique** (dans l'editeur d'un jeu, section
-  repliable) :
-  - Un selecteur de processus (liste les process en cours) et de module,
-    pour remplir `process_name`/`module_name` sans les taper a la main.
-  - Un mini-scanner memoire "avant/apres" : vous capturez un instantane de
-    la memoire du jeu dans un etat (ex. menu), un second dans l'autre etat
-    (ex. en jeu), et l'outil liste les octets qui ont change entre les deux
-    — un bouton "Utiliser" sur un candidat remplit directement
-    `offset`/`in_game_bytes`. Lecture seule (`ReadProcessMemory`), plafonnee
-    en volume scanne (~96 Mo de regions privees lisibles/inscriptibles) :
-    c'est un scan "premiere passe" a la Cheat Engine, pas un outil de reverse
-    engineering complet — a affiner en repetant l'operation si trop de
-    candidats remontent.
+Features:
+
+- Calibration gauge: cm/360° target and DPI, with a live-updating preview
+  of the factor applied to each game in the list (`×0.xx` badge).
+- Game cards: add, edit, delete; live factor preview while typing the
+  constant.
+- **Load example**: reloads the contents of `games.example.yaml` (embedded
+  in the binary at compile time, no network access) as a starting point.
+- **Automatic-detection assistant** (in a game's editor, collapsible
+  section):
+  - A process picker (lists running processes) and module picker, to fill
+    in `process_name`/`module_name` without typing them by hand.
+  - A "before/after" mini memory scanner: you capture a snapshot of the
+    game's memory in one state (e.g. menu), a second one in the other state
+    (e.g. in-game), and the tool lists the bytes that changed between the
+    two — a "Use" button on a candidate fills in `offset`/`in_game_bytes`
+    directly. Read-only (`ReadProcessMemory`), capped in scanned volume
+    (~96 MB of readable/writable private regions): it's a Cheat-Engine-style
+    "first pass" scan, not a full reverse-engineering tool — refine by
+    repeating the operation if too many candidates come back.
+
+![unisense GUI — editing a game, with live factor preview](docs/screenshots/game-editor.png)
 
 ## Hotkeys
 
-Formats acceptes dans le YAML : `"F9"`, `"Ctrl+Alt+F9"`, `"Shift+F5"`,
-`"Mouse3"` (clic molette), `"Mouse4"` (bouton arriere), `"Mouse5"` (bouton
-avant). Les hotkeys clavier passent par l'API Windows standard
-(`RegisterHotKey`, globales, fonctionnent meme jeu au premier plan) ; les
-hotkeys souris sont detectees directement dans le flux Interception (les
-boutons souris ne sont pas supportes par `RegisterHotKey`).
+Accepted formats in the YAML: `"F9"`, `"Ctrl+Alt+F9"`, `"Shift+F5"`,
+`"Mouse3"` (middle click), `"Mouse4"` (back button), `"Mouse5"` (forward
+button). Keyboard hotkeys go through the standard Windows API
+(`RegisterHotKey`, global, work even with a game in the foreground); mouse
+hotkeys are detected directly in the Interception stream (mouse buttons
+aren't supported by `RegisterHotKey`).
 
-- `settings.toggle_hotkey` : bascule passthrough <-> dernier jeu utilise.
-- `settings.cycle_game_hotkey` : passe au jeu suivant dans la liste (sort du
-  passthrough si necessaire).
-- `hotkey:` (optionnel, par jeu) : selectionne ce jeu directement.
-- Clic gauche sur l'icone systray : equivalent a `toggle_hotkey`.
-- Clic droit sur l'icone systray : menu (choix du jeu, passthrough, quitter).
+- `settings.toggle_hotkey`: toggles passthrough <-> last used game.
+- `settings.cycle_game_hotkey`: moves to the next game in the list (leaves
+  passthrough if needed).
+- `hotkey:` (optional, per game): selects that game directly.
+- Left-click on the tray icon: same as `toggle_hotkey`.
+- Right-click on the tray icon: menu (pick a game, passthrough, quit).
 
-## Calculer la constante d'un nouveau jeu
+## Computing a new game's constant
 
-`deg_per_count_at_ref` = nombre de degres dont tourne la camera pour **un
-seul compte** de mouvement souris brut, avec la sensibilite in-game fixee a
+`deg_per_count_at_ref` = number of degrees the camera turns for **a single
+count** of raw mouse movement, with in-game sensitivity fixed at
 `reference_sensitivity`.
 
-**Methode 1 — table publique** : cherchez le jeu sur
-[mouse-sensitivity.com](https://www.mouse-sensitivity.com/) ou dans les
-fichiers de config du jeu (ex : `m_yaw` pour les moteurs Source/GoldSrc,
-souvent `0.022` par defaut — la constante est alors
-`sensitivity_de_reference * m_yaw`).
+**Method 1 — public table**: look up the game on
+[mouse-sensitivity.com](https://www.mouse-sensitivity.com/) or in the
+game's config files (e.g. `m_yaw` for Source/GoldSrc engines, often `0.022`
+by default — the constant is then
+`reference_sensitivity * m_yaw`).
 
-**Methode 2 — mesure empirique** (fiable, independante des tables tierces) :
+**Method 2 — empirical measurement** (reliable, independent of third-party
+tables):
 
-1. Fixez un DPI connu D (ex : 800) et la sensi in-game a votre reference
-   (ex : 1.0).
-2. Dans le jeu, tournez la camera d'exactement 360° en utilisant un tapis de
-   souris avec repere (ou une regle + un point de reference visuel a
-   l'ecran), et mesurez la distance parcourue en cm : `cm_360_mesure`.
-3. Calculez :
+1. Set a known DPI D (e.g. 800) and the in-game sensitivity to your
+   reference (e.g. 1.0).
+2. In the game, turn the camera by exactly 360° using a mouse pad with a
+   marker (or a ruler plus a visual reference point on screen), and measure
+   the distance traveled in cm: `measured_cm_360`.
+3. Compute:
    ```
-   deg_per_count_at_ref = (2.54 * 360) / (cm_360_mesure * D)
+   deg_per_count_at_ref = (2.54 * 360) / (measured_cm_360 * D)
    ```
-   (c'est l'inverse de la formule utilisee par `scaling::compute_factor`,
-   cf. commentaires en tete de `src/scaling.rs`).
-4. Ajoutez l'entree dans `games.yaml` avec `reference_sensitivity` = la
-   valeur utilisee a l'etape 1.
+   (this is the inverse of the formula used by `scaling::compute_factor`,
+   see the comments at the top of `core/src/scaling.rs`).
+4. Add the entry to `games.yaml` with `reference_sensitivity` = the value
+   used in step 1.
 
-Revalidez la constante apres toute mise a jour majeure du jeu qui touche a
-la sensibilite (patch notes a surveiller).
+Re-validate the constant after any major game update that touches
+sensitivity (watch the patch notes).
 
-## Detection automatique (avancee, experimentale)
+## Automatic detection (advanced, experimental)
 
-Le point 5.2 du cahier des charges (bascule automatique menu/gameplay par
-lecture memoire) est implemente comme un **framework generique**, pas comme
-des offsets pre-remplis pour des jeux precis : ce projet ne fournit et ne
-maintient aucune adresse memoire, car elles sont specifiques a chaque
-version d'un jeu et cassent au moindre patch.
+Item 5.2 of the spec (automatic menu/gameplay toggling via memory reading)
+is implemented as a **generic framework**, not as pre-filled offsets for
+specific games: this project doesn't ship or maintain any memory address,
+since they're specific to each game version and break on the next patch.
 
-Pour l'activer sur un jeu, ajoutez un bloc `auto_detect` a son entree (voir
-l'exemple commente dans `games.example.yaml`) :
+To enable it for a game, add an `auto_detect` block to its entry (see the
+commented example in `games.example.yaml`):
 
 ```yaml
 auto_detect:
-  process_name: "MonJeu.exe"
-  module_name: "MonJeu.exe"   # optionnel, defaut = module principal
-  offset: 0x00ABCDEF          # offset depuis la base du module
-  pointer_chain: []           # chaine de pointeurs a suivre, si besoin
-  in_game_bytes: [0x01]       # valeur attendue EN JEU (gameplay)
+  process_name: "MyGame.exe"
+  module_name: "MyGame.exe"   # optional, defaults to the main module
+  offset: 0x00ABCDEF          # offset from the module base
+  pointer_chain: []           # pointer chain to follow, if needed
+  in_game_bytes: [0x01]       # expected value WHILE PLAYING (gameplay)
   poll_interval_ms: 250
 ```
 
-Trouver `offset`/`in_game_bytes` demande de reverse-engineer le jeu (ex :
-[Cheat Engine](https://www.cheatengine.org/), scan de valeur "01 en jeu / 00
-au menu", puis "quel pointeur statique y mene"). C'est fait en lecture seule
-(`ReadProcessMemory`), unisense n'ecrit jamais dans la memoire d'un autre
-process. Voir aussi l'avertissement anti-cheat plus haut : lire la memoire
-d'un process protege par un anti-cheat noyau peut aussi etre detecte/interdit
-independamment d'Interception.
+Finding `offset`/`in_game_bytes` requires reverse-engineering the game
+(e.g. [Cheat Engine](https://www.cheatengine.org/), scanning for "01
+in-game / 00 in menu", then "which static pointer leads there"). This is
+done read-only (`ReadProcessMemory`); unisense never writes into another
+process's memory. See also the anti-cheat warning above: reading the memory
+of a process protected by a kernel anti-cheat can also be
+detected/forbidden independently of Interception.
 
-## Architecture du code
+## Code architecture
 
-Workspace Cargo a trois membres :
+Three-member Cargo workspace:
 
 ```
-core/                       unisense-core (lib, sans dependance Win32)
-  src/config.rs              Schema + chargement/sauvegarde du YAML
-  src/scaling.rs              Calcul du facteur + accumulateur (teste)
+core/                       unisense-core (lib, no Win32 dependency)
+  src/config.rs              YAML schema + loading/saving
+  src/scaling.rs              Factor calculation + accumulator (tested)
 
-app/                        unisense (l'executable tray, decrit plus haut)
-  build.rs                   Copie vendor/interception/interception.dll
-  src/interception.rs         Bindings FFI vers interception.dll
-  src/hotkey.rs                Parsing "Ctrl+Alt+F9" / "Mouse4"
-  src/capture.rs                Thread de capture (scaling + hotkeys souris)
-  src/state.rs                   Etat partage (mode, facteurs, accumulateurs)
-  src/tray.rs                     Fenetre Win32 invisible, systray, hotkeys
-  src/memory_watch.rs              Detection auto (5.2), framework generique
-  src/main.rs                       Cablage de tout ce qui precede
+app/                        unisense (the tray executable, described above)
+  build.rs                   Copies vendor/interception/interception.dll
+  src/interception.rs         FFI bindings to interception.dll
+  src/hotkey.rs                Parses "Ctrl+Alt+F9" / "Mouse4"
+  src/capture.rs                Capture thread (scaling + mouse hotkeys)
+  src/state.rs                   Shared state (mode, factors, accumulators)
+  src/tray.rs                     Invisible Win32 window, tray, hotkeys
+  src/memory_watch.rs              Auto-detection (5.2), generic framework
+  src/main.rs                       Wires everything above together
 
-gui/                        unisense-gui (interface de configuration)
+gui/                        unisense-gui (configuration UI)
   src-tauri/build.rs          tauri_build::build()
-  src-tauri/src/sysinfo.rs     Process/module/scan memoire (Win32)
-  src-tauri/src/commands.rs     Commandes exposees au frontend
-  src-tauri/src/main.rs          Cablage Tauri
-  frontend/                       HTML/CSS/JS statique (pas de bundler)
+  src-tauri/src/sysinfo.rs     Process/module/memory scan (Win32)
+  src-tauri/src/commands.rs     Commands exposed to the frontend
+  src-tauri/src/main.rs          Tauri wiring
+  frontend/                       Static HTML/CSS/JS (no bundler)
 ```
 
-`core` est partage entre `app` et `gui` pour que le calcul du facteur et le
-schema de config restent une seule source de verite.
+`core` is shared between `app` and `gui` so the factor calculation and the
+config schema stay a single source of truth.
 
-Un seul facteur lineaire est applique (`x' = x * F`, `y' = y * F`) : pas de
-courbe d'acceleration, de smoothing ni de capping ajoutes par l'outil, comme
-demande.
+Only a single linear factor is applied (`x' = x * F`, `y' = y * F`): no
+acceleration curve, smoothing, or capping added by the tool itself, as
+required.
 
-## Limitations connues
+## Known limitations
 
-- Windows/Interception ne peuvent pas lire le DPI materiel de la souris :
-  `mouse_dpi` doit etre tenu a jour manuellement dans la config si vous le
-  changez sur la souris.
-- La correction `current_sensitivity`/`reference_sensitivity` suppose une
-  formule de sensibilite lineaire cote jeu ; faux pour quelques jeux
-  (courbes non lineaires), voir plus haut.
-- `deg_per_count_at_ref` peut devenir obsolete apres une mise a jour du jeu.
-- Pas de detection automatique de processus pour le changement de jeu par
-  defaut (choix delibere du cahier des charges) ; combinable avec
-  `auto_detect` (5.2) si vous etes pret a maintenir vos propres offsets.
+- Windows/Interception can't read the mouse's hardware DPI: `mouse_dpi`
+  must be kept up to date by hand in the config if you change it on the
+  mouse.
+- The `current_sensitivity`/`reference_sensitivity` correction assumes a
+  linear sensitivity formula on the game's side; false for a few games
+  (non-linear curves), see above.
+- `deg_per_count_at_ref` can become stale after a game update.
+- No automatic process detection for switching games by default (a
+  deliberate choice per the spec); can be combined with `auto_detect` (5.2)
+  if you're willing to maintain your own offsets.
 
-## Idees d'amelioration
+## Ideas for improvement
 
-- **Detection de processus au premier plan** (`GetForegroundWindow` +
-  correspondance nom d'exe -> jeu configure) comme alternative plus fiable
-  et moins fragile que la lecture memoire pour au moins savoir *quel jeu*
-  est actif (le distinguo menu/gameplay resterait manuel ou via
+- **Foreground-process detection** (`GetForegroundWindow` + matching the
+  exe name to a configured game) as a more reliable, less fragile
+  alternative to memory reading for at least knowing *which game* is
+  active (the menu/gameplay distinction would remain manual or via
   `auto_detect`).
-- **Rechargement a chaud** du YAML (watcher de fichier) sans relancer
-  l'appli tray.
-- **Indicateur a l'ecran** (overlay discret) du mode actif, pour ceux qui ne
-  regardent pas la zone de notification.
-- **Multi-souris** : le code gere deja des accumulateurs par
-  `InterceptionDevice`, mais il n'y a pas encore de moyen de configurer un
-  DPI different par souris physique.
-- **Signature/installeur** (MSI ou script d'installation guidee du driver +
-  de l'appli + creation de la tache de demarrage automatique).
-- **API locale (named pipe)** pour piloter le changement de jeu/mode depuis
-  un Stream Deck, un script AutoHotkey, ou un launcher de jeu tiers.
-- **Chaine de pointeurs dans la GUI** : `pointer_chain` (utile pour les
-  adresses qui bougent a chaque lancement du jeu) n'est editable qu'a la
-  main dans le YAML pour l'instant, pas depuis l'assistant de detection.
-- **Selecteur de fichier natif** dans la GUI pour choisir un `games.yaml`
-  ailleurs que dans le dossier conventionnel a cote de l'exe (actuellement
-  pas de dependance a un plugin de dialogue Tauri, pour rester minimal).
+- **Hot-reloading** the YAML (file watcher) without restarting the tray
+  app.
+- **On-screen indicator** (discreet overlay) of the active mode, for those
+  who don't watch the notification area.
+- **Multiple mice**: the code already keeps accumulators per
+  `InterceptionDevice`, but there's no way yet to configure a different DPI
+  per physical mouse.
+- **Installer** (MSI or a guided install script for the driver + the app +
+  creating a startup task).
+- **Local API (named pipe)** to drive game/mode switching from a Stream
+  Deck, an AutoHotkey script, or a third-party game launcher.
+- **Pointer chain in the GUI**: `pointer_chain` (useful for addresses that
+  move on every game launch) is only editable by hand in the YAML for now,
+  not from the detection assistant.
+- **Native file picker** in the GUI to choose a `games.yaml` somewhere
+  other than the conventional folder next to the exe (currently no
+  dependency on a Tauri dialog plugin, to stay minimal).
 
-## Contribuer / versionnage
+## Contributing / versioning
 
-Le numero de version et le `CHANGELOG.md` sont geres automatiquement par
-[release-please](https://github.com/googleapis/release-please) a partir des
-messages de commit sur `main`, au format
-[Conventional Commits](https://www.conventionalcommits.org/) :
+The version number and `CHANGELOG.md` are managed automatically by
+[release-please](https://github.com/googleapis/release-please) from commit
+messages on `main`, in
+[Conventional Commits](https://www.conventionalcommits.org/) format:
 
-- `feat: ...` -> version mineure
-- `fix: ...` -> version corrective
-- `feat!: ...` / pied `BREAKING CHANGE: ...` -> version majeure
-- `chore:`, `ci:`, `docs:`, `test:`, `build:`, `refactor:`, `perf:` -> pas de
-  bump de version (mais entree de changelog pour `docs`/`perf`/`refactor`)
+- `feat: ...` -> minor version bump
+- `fix: ...` -> patch version bump
+- `feat!: ...` / `BREAKING CHANGE: ...` footer -> major version bump
+- `chore:`, `ci:`, `docs:`, `test:`, `build:`, `refactor:`, `perf:` -> no
+  version bump (but a changelog entry for `docs`/`perf`/`refactor`)
 
-A chaque release, `.github/workflows/publish-release-assets.yml` compile et
-attache un zip (`unisense.exe` + `interception.dll` + `unisense-gui.exe` +
-`config/` + `vendor/`) au GitHub Release. Voir `CLAUDE.md` pour le detail du
-pipeline.
+On every release, `.github/workflows/publish-release-assets.yml` builds and
+attaches a zip (`unisense.exe` + `interception.dll` + `unisense-gui.exe` +
+`config/` + `vendor/`) to the GitHub Release. See `CLAUDE.md` for the
+pipeline's details.
 
-## Licence
+## License
 
-MIT, voir `LICENSE`, pour le code source d'unisense (`core/`, `app/`,
+MIT, see `LICENSE`, for unisense's own source code (`core/`, `app/`,
 `gui/src-tauri/`, `gui/frontend/*.{html,css,js}`).
 
-Composants tiers redistribues (binaires non modifies, licences separees —
-voir chaque NOTICE) :
-- `vendor/interception/` : Interception (LGPL 3.0, usage non commercial —
-  voir `vendor/interception/NOTICE.md`).
-- `gui/frontend/fonts/` : Space Grotesk (SIL OFL 1.1 — voir
+Redistributed third-party components (unmodified binaries, separate
+licenses — see each NOTICE):
+- `vendor/interception/`: Interception (LGPL 3.0, non-commercial use — see
+  `vendor/interception/NOTICE.md`).
+- `gui/frontend/fonts/`: Space Grotesk (SIL OFL 1.1 — see
   `gui/frontend/fonts/NOTICE.md`).

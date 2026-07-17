@@ -25,7 +25,7 @@ const defaultSettings = () => ({
 const state = {
   settings: defaultSettings(),
   games: [],
-  editingIndex: null, // null = nouveau jeu
+  editingIndex: null, // null = new game
   processes: [],
   snapA: null,
   snapB: null,
@@ -101,7 +101,7 @@ function renderGames() {
   const grid = $("games-grid");
   const empty = $("empty-state");
   $("games-count").textContent =
-    state.games.length === 0 ? "" : `${state.games.length} jeu${state.games.length > 1 ? "x" : ""}`;
+    state.games.length === 0 ? "" : `${state.games.length} game${state.games.length > 1 ? "s" : ""}`;
 
   if (state.games.length === 0) {
     grid.hidden = true;
@@ -128,12 +128,12 @@ function renderGames() {
     card.tabIndex = 0;
     card.innerHTML = `
       <div class="game-card-top">
-        <h3>${escapeHtml(game.name || "(sans nom)")}</h3>
+        <h3>${escapeHtml(game.name || "(unnamed)")}</h3>
         <span class="factor-badge">${fmtFactor(factor)}</span>
       </div>
       <dl>
-        <dt>constante</dt><dd>${game.deg_per_count_at_ref}</dd>
-        <dt>sensi réf.</dt><dd>${game.reference_sensitivity}</dd>
+        <dt>constant</dt><dd>${game.deg_per_count_at_ref}</dd>
+        <dt>ref. sens.</dt><dd>${game.reference_sensitivity}</dd>
       </dl>
       <div class="game-card-tags">
         ${game.hotkey ? `<span class="tag">⌨ ${escapeHtml(game.hotkey)}</span>` : ""}
@@ -150,7 +150,7 @@ function renderGames() {
   const addCard = document.createElement("div");
   addCard.className = "game-card add-card";
   addCard.tabIndex = 0;
-  addCard.innerHTML = `<span class="plus">+</span><span>Ajouter un jeu</span>`;
+  addCard.innerHTML = `<span class="plus">+</span><span>Add a game</span>`;
   addCard.addEventListener("click", () => openEditor(null));
   grid.appendChild(addCard);
 }
@@ -170,7 +170,7 @@ function openEditor(index) {
     ? { name: "", deg_per_count_at_ref: "", reference_sensitivity: 1, current_sensitivity: null, hotkey: "", source: "", auto_detect: null }
     : state.games[index];
 
-  $("drawer-title").textContent = isNew ? "Ajouter un jeu" : "Modifier le jeu";
+  $("drawer-title").textContent = isNew ? "Add a game" : "Edit game";
   $("game-name").value = game.name || "";
   $("game-constant").value = game.deg_per_count_at_ref ?? "";
   $("game-ref-sens").value = game.reference_sensitivity ?? "";
@@ -214,11 +214,11 @@ function updateGamePreview() {
   const el = $("game-preview");
 
   if (!(constant > 0) || !(refSens > 0)) {
-    el.innerHTML = `Renseignez la constante et la sensi de référence pour voir le facteur.`;
+    el.innerHTML = `Fill in the constant and reference sensitivity to see the resulting factor.`;
     return;
   }
   const factor = computeFactor(target, dpi, constant, refSens, curSens);
-  el.innerHTML = `Facteur appliqué : <strong>${fmtFactor(factor)}</strong> à ${dpi || "?"} DPI pour ${target || "?"} cm/360°`;
+  el.innerHTML = `Applied factor: <strong>${fmtFactor(factor)}</strong> at ${dpi || "?"} DPI for ${target || "?"} cm/360°`;
 }
 
 function buildGameFromForm() {
@@ -227,9 +227,9 @@ function buildGameFromForm() {
   const refSens = parseFloat($("game-ref-sens").value);
   const curSensRaw = $("game-current-sens").value.trim();
 
-  if (!name) throw new Error("Le nom du jeu est requis.");
-  if (!(constant > 0)) throw new Error("La constante doit être un nombre positif.");
-  if (!(refSens > 0)) throw new Error("La sensi de référence doit être un nombre positif.");
+  if (!name) throw new Error("Game name is required.");
+  if (!(constant > 0)) throw new Error("The constant must be a positive number.");
+  if (!(refSens > 0)) throw new Error("The reference sensitivity must be a positive number.");
 
   const game = {
     name,
@@ -245,14 +245,14 @@ function buildGameFromForm() {
     const processName = state.pendingProcessName;
     const offsetRaw = $("offset-hex").value.trim();
     const bytesRaw = $("in-game-bytes").value.trim();
-    if (!processName) throw new Error("Sélectionnez un processus pour la détection automatique.");
-    if (!/^0x[0-9a-f]+$/i.test(offsetRaw)) throw new Error("Offset invalide (format attendu : 0xABCDEF).");
+    if (!processName) throw new Error("Select a process for automatic detection.");
+    if (!/^0x[0-9a-f]+$/i.test(offsetRaw)) throw new Error("Invalid offset (expected format: 0xABCDEF).");
     const bytes = bytesRaw
       .split(/\s+/)
       .filter(Boolean)
       .map((h) => parseInt(h, 16));
     if (bytes.length === 0 || bytes.some((b) => Number.isNaN(b) || b < 0 || b > 255)) {
-      throw new Error("Octets « en jeu » invalides (ex : 01 ou 01 00).");
+      throw new Error("Invalid \"in-game\" bytes (e.g. 01 or 01 00).");
     }
     game.auto_detect = {
       process_name: processName,
@@ -296,7 +296,7 @@ async function refreshProcesses() {
   try {
     state.processes = await invoke("list_processes");
     const sel = $("process-select");
-    sel.innerHTML = `<option value="">— choisir —</option>` + state.processes
+    sel.innerHTML = `<option value="">— choose —</option>` + state.processes
       .map((p) => `<option value="${p.pid}">${escapeHtml(p.name)} (${p.pid})</option>`)
       .join("");
     if (state.pendingProcessName) {
@@ -307,14 +307,14 @@ async function refreshProcesses() {
       }
     }
   } catch (e) {
-    setScanStatus(`Erreur liste des process : ${e}`);
+    setScanStatus(`Error listing processes: ${e}`);
   }
 }
 
 async function refreshModules() {
   const pid = Number($("process-select").value);
   const sel = $("module-select");
-  sel.innerHTML = `<option value="">(module principal)</option>`;
+  sel.innerHTML = `<option value="">(main module)</option>`;
   if (!pid) return;
   const selectedProc = state.processes.find((p) => p.pid === pid);
   state.pendingProcessName = selectedProc ? selectedProc.name : null;
@@ -323,7 +323,7 @@ async function refreshModules() {
     sel.innerHTML += modules.map((m) => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join("");
     if (state.pendingModuleName) sel.value = state.pendingModuleName;
   } catch (e) {
-    setScanStatus(`Erreur liste des modules : ${e}`);
+    setScanStatus(`Error listing modules: ${e}`);
   }
   resetScanUI();
 }
@@ -344,44 +344,44 @@ function resetScanUI() {
 async function takeSnapshot(which) {
   const pid = Number($("process-select").value);
   if (!pid) {
-    setScanStatus("Choisissez un processus d'abord.");
+    setScanStatus("Choose a process first.");
     return;
   }
-  setScanStatus(`Capture ${which}…`);
+  setScanStatus(`Capturing ${which}…`);
   try {
     const id = await invoke("mem_snapshot", { pid });
     if (which === "A") state.snapA = id;
     else state.snapB = id;
     setScanStatus(
-      `État A : ${state.snapA ? "capturé" : "—"}   ·   État B : ${state.snapB ? "capturé" : "—"}`
+      `State A: ${state.snapA ? "captured" : "—"}   ·   State B: ${state.snapB ? "captured" : "—"}`
     );
     $("diff-btn").disabled = !(state.snapA && state.snapB);
   } catch (e) {
-    setScanStatus(`Erreur de capture : ${e}`);
+    setScanStatus(`Capture error: ${e}`);
   }
 }
 
 async function runDiff() {
-  setScanStatus("Comparaison…");
+  setScanStatus("Comparing…");
   try {
     const results = await invoke("mem_diff", { snapshotA: state.snapA, snapshotB: state.snapB });
     const body = $("scan-results-body");
     if (results.length === 0) {
-      setScanStatus("Aucune différence trouvée dans la zone scannée. Changez d'état plus franchement et refaites l'essai.");
+      setScanStatus("No difference found in the scanned area. Change state more drastically and try again.");
       $("scan-results").hidden = true;
       return;
     }
-    setScanStatus(`${results.length} octet(s) modifié(s) (limité aux ${results.length >= 500 ? "500 premiers" : results.length}).`);
+    setScanStatus(`${results.length} byte(s) changed (limited to ${results.length >= 500 ? "the first 500" : results.length}).`);
     body.innerHTML = results
       .map((r, idx) => {
         const canUse = !!r.module;
         return `
         <tr>
           <td>${r.address_hex}</td>
-          <td>${r.module ? escapeHtml(r.module) + (r.offset_hex ? " + " + r.offset_hex : "") : "hors module"}</td>
+          <td>${r.module ? escapeHtml(r.module) + (r.offset_hex ? " + " + r.offset_hex : "") : "outside any module"}</td>
           <td>0x${r.value_a.toString(16).padStart(2, "0")}</td>
           <td class="value-changed">0x${r.value_b.toString(16).padStart(2, "0")}</td>
-          <td>${canUse ? `<button class="use-row-btn" data-idx="${idx}">Utiliser</button>` : "—"}</td>
+          <td>${canUse ? `<button class="use-row-btn" data-idx="${idx}">Use</button>` : "—"}</td>
         </tr>`;
       })
       .join("");
@@ -393,11 +393,11 @@ async function runDiff() {
         $("module-select").value = r.module;
         $("offset-hex").value = r.offset_hex;
         $("in-game-bytes").value = r.value_b.toString(16).padStart(2, "0");
-        setScanStatus(`Candidat appliqué : ${r.module} + ${r.offset_hex} = 0x${r.value_b.toString(16)} en jeu.`);
+        setScanStatus(`Candidate applied: ${r.module} + ${r.offset_hex} = 0x${r.value_b.toString(16)} in-game.`);
       });
     });
   } catch (e) {
-    setScanStatus(`Erreur de comparaison : ${e}`);
+    setScanStatus(`Comparison error: ${e}`);
   }
 }
 
@@ -413,14 +413,20 @@ async function loadConfig() {
     showBanner("");
   } catch (e) {
     const msg = String(e);
+    // The Rust side (core/src/config.rs) still raises this specific French
+    // wording ("lecture impossible de ...") for a plain "file not found" —
+    // it hasn't been translated (not user-facing prose, just an internal
+    // anyhow context string). Keep this check in sync with that string if
+    // it ever changes, or first-launch would wrongly show a red error
+    // banner instead of the friendly empty state.
     if (msg.includes("lecture impossible")) {
-      // Pas encore de config a cet emplacement : etat de premier lancement, pas une erreur.
+      // No config at this location yet: first-launch state, not an error.
       state.settings = defaultSettings();
       state.games = [];
       renderSettingsFields();
       renderGames();
     } else {
-      showBanner(`Config illisible : ${msg}`);
+      showBanner(`Could not read config: ${msg}`);
     }
   }
 }
@@ -433,9 +439,9 @@ async function loadExample() {
     renderSettingsFields();
     renderGames();
     showBanner("");
-    showStatus("Config d'exemple chargée — pensez à Enregistrer.");
+    showStatus("Example config loaded — remember to Save.");
   } catch (e) {
-    showBanner(`Impossible de charger l'exemple : ${e}`);
+    showBanner(`Could not load the example: ${e}`);
   }
 }
 
@@ -448,9 +454,9 @@ async function saveConfig() {
 
   try {
     await invoke("save_config", { config: { settings: state.settings, games: state.games } });
-    showStatus("Enregistré ✓");
+    showStatus("Saved ✓");
   } catch (e) {
-    showStatus(`Échec de l'enregistrement : ${e}`, true);
+    showStatus(`Save failed: ${e}`, true);
   }
 }
 
@@ -506,7 +512,7 @@ async function init() {
     $("config-path").textContent = await invoke("config_path_string");
     $("config-path").title = $("config-path").textContent;
   } catch {
-    /* purement cosmetique, on ignore */
+    /* purely cosmetic, ignore */
   }
   await loadConfig();
 }

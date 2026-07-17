@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="color-scheme" content="dark" />
@@ -25,11 +25,11 @@
       </svg>
       <div>
         <h1>unisense</h1>
-        <p class="tagline">Un seul geste. Le même partout.</p>
+        <p class="tagline">One motion. Same everywhere.</p>
       </div>
     </header>
 
-    <section class="gauge-card" aria-label="Cible de sensibilité">
+    <section class="gauge-card" aria-label="Sensitivity target">
       <div class="gauge-wrap">
         <svg class="gauge" viewBox="0 0 200 200" id="gauge-svg">
           <circle class="gauge-track" cx="100" cy="100" r="82" />
@@ -41,36 +41,36 @@
           <span class="gauge-unit">cm / 360°</span>
         </div>
       </div>
-      <p class="gauge-caption">Ce geste vaut pour chaque jeu ci-dessous.</p>
+      <p class="gauge-caption">This motion applies to every game below.</p>
 
       <label class="field">
-        <span>Cible cm/360°</span>
+        <span>Target cm/360°</span>
         <input type="number" id="target-cm360" step="0.1" min="1" inputmode="decimal" />
       </label>
       <label class="field">
-        <span>DPI souris</span>
+        <span>Mouse DPI</span>
         <input type="number" id="mouse-dpi" step="1" min="50" inputmode="numeric" />
       </label>
     </section>
 
     <section class="hotkeys-card">
-      <h2>Raccourcis</h2>
+      <h2>Hotkeys</h2>
       <label class="field">
-        <span>Basculer passthrough</span>
+        <span>Toggle passthrough</span>
         <input type="text" id="toggle-hotkey" placeholder="Mouse4" />
       </label>
       <label class="field">
-        <span>Jeu suivant</span>
+        <span>Next game</span>
         <input type="text" id="cycle-hotkey" placeholder="Ctrl+Alt+F9" />
       </label>
       <label class="checkbox">
         <input type="checkbox" id="start-passthrough" />
-        <span>Démarrer en passthrough</span>
+        <span>Start in passthrough</span>
       </label>
     </section>
 
     <footer class="rail-footer">
-      <button class="btn btn-primary" id="save-btn">Enregistrer</button>
+      <button class="btn btn-primary" id="save-btn">Save</button>
       <p class="status" id="status" role="status"></p>
       <p class="config-path" id="config-path" title=""></p>
     </footer>
@@ -79,12 +79,12 @@
   <main class="content">
     <div class="toolbar">
       <div>
-        <h2>Jeux configurés</h2>
+        <h2>Configured games</h2>
         <p class="muted" id="games-count"></p>
       </div>
       <div class="toolbar-actions">
-        <button class="btn btn-ghost" id="load-example-btn">Charger l'exemple</button>
-        <button class="btn btn-accent" id="add-game-btn">+ Ajouter un jeu</button>
+        <button class="btn btn-ghost" id="load-example-btn">Load example</button>
+        <button class="btn btn-accent" id="add-game-btn">+ Add game</button>
       </div>
     </div>
 
@@ -97,83 +97,83 @@
         <circle cx="24" cy="24" r="17" />
         <path d="M24 15v6M24 27v6M15 24h6M27 24h6" />
       </svg>
-      <h3>Aucun jeu configuré</h3>
-      <p>Chargez la config d'exemple pour démarrer avec quelques constantes connues, ou ajoutez votre premier jeu à la main.</p>
+      <h3>No games configured</h3>
+      <p>Load the example config to start with a few known constants, or add your first game by hand.</p>
       <div class="empty-actions">
-        <button class="btn btn-ghost" id="empty-load-example-btn">Charger l'exemple</button>
-        <button class="btn btn-accent" id="empty-add-game-btn">+ Ajouter un jeu</button>
+        <button class="btn btn-ghost" id="empty-load-example-btn">Load example</button>
+        <button class="btn btn-accent" id="empty-add-game-btn">+ Add game</button>
       </div>
     </div>
   </main>
 
   <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
 
-  <aside class="drawer" id="drawer" hidden aria-label="Édition du jeu">
+  <aside class="drawer" id="drawer" hidden aria-label="Edit game">
     <header class="drawer-header">
-      <h2 id="drawer-title">Ajouter un jeu</h2>
-      <button class="icon-btn" id="drawer-close" aria-label="Fermer">✕</button>
+      <h2 id="drawer-title">Add a game</h2>
+      <button class="icon-btn" id="drawer-close" aria-label="Close">✕</button>
     </header>
 
     <div class="drawer-body">
       <label class="field">
-        <span>Nom</span>
+        <span>Name</span>
         <input type="text" id="game-name" placeholder="Valorant" />
       </label>
 
       <div class="field-row">
         <label class="field">
-          <span>Constante (°/compte)</span>
+          <span>Constant (°/count)</span>
           <input type="number" id="game-constant" step="any" inputmode="decimal" />
         </label>
         <label class="field">
-          <span>Sensi de référence</span>
+          <span>Reference sensitivity</span>
           <input type="number" id="game-ref-sens" step="any" inputmode="decimal" />
         </label>
       </div>
 
       <label class="field">
-        <span>Sensi in-game réelle (optionnel)</span>
-        <input type="number" id="game-current-sens" step="any" inputmode="decimal" placeholder="= référence si vide" />
+        <span>Actual in-game sensitivity (optional)</span>
+        <input type="number" id="game-current-sens" step="any" inputmode="decimal" placeholder="= reference if empty" />
       </label>
 
       <div class="preview-line" id="game-preview"></div>
 
       <label class="field">
-        <span>Raccourci de sélection directe (optionnel)</span>
+        <span>Direct-select hotkey (optional)</span>
         <input type="text" id="game-hotkey" placeholder="Ctrl+Alt+F5" />
       </label>
 
       <label class="field">
-        <span>Source (optionnel)</span>
+        <span>Source (optional)</span>
         <input type="text" id="game-source" placeholder="mouse-sensitivity.com/..." />
       </label>
 
       <details class="assist" id="assist-details">
-        <summary>Détection automatique (avancé, expérimental)</summary>
+        <summary>Automatic detection (advanced, experimental)</summary>
 
         <div class="assist-body">
           <p class="muted small">
-            Bascule automatiquement entre passthrough et ce jeu en lisant un
-            octet d'état en mémoire (lecture seule). Fragile : casse au
-            moindre patch du jeu. Voir le README pour le détail.
+            Automatically switches between passthrough and this game by
+            reading a state byte in memory (read-only). Fragile: breaks on
+            the next game patch. See the README for details.
           </p>
 
           <label class="checkbox">
             <input type="checkbox" id="auto-detect-enabled" />
-            <span>Activer pour ce jeu</span>
+            <span>Enable for this game</span>
           </label>
 
           <div id="auto-detect-fields" hidden>
             <div class="field-row">
               <label class="field">
-                <span>Processus</span>
+                <span>Process</span>
                 <select id="process-select"></select>
               </label>
               <button class="btn btn-ghost btn-small" id="refresh-processes-btn" type="button">↻</button>
             </div>
 
             <label class="field">
-              <span>Module (vide = module principal)</span>
+              <span>Module (empty = main module)</span>
               <select id="module-select"></select>
             </label>
 
@@ -183,33 +183,33 @@
                 <input type="text" id="offset-hex" placeholder="0x00ABCDEF" />
               </label>
               <label class="field">
-                <span>Octets en jeu (hex, séparés par des espaces)</span>
+                <span>In-game bytes (hex, space-separated)</span>
                 <input type="text" id="in-game-bytes" placeholder="01" />
               </label>
             </div>
 
             <label class="field">
-              <span>Intervalle de sondage (ms)</span>
+              <span>Poll interval (ms)</span>
               <input type="number" id="poll-interval" step="10" min="50" />
             </label>
 
             <div class="scan-assist">
-              <h3>Assistant de scan mémoire</h3>
+              <h3>Memory scan assistant</h3>
               <p class="muted small">
-                1. Mettez le jeu dans un état (ex : menu) puis « Capturer A ».
-                2. Passez à l'autre état (ex : en jeu) puis « Capturer B ».
-                3. « Comparer » liste les octets qui ont changé entre les deux.
+                1. Put the game in one state (e.g. menu), then "Capture A".
+                2. Switch to the other state (e.g. in-game), then "Capture B".
+                3. "Compare" lists the bytes that changed between the two.
               </p>
               <div class="scan-actions">
-                <button class="btn btn-ghost btn-small" id="snapshot-a-btn" type="button">Capturer état A</button>
-                <button class="btn btn-ghost btn-small" id="snapshot-b-btn" type="button">Capturer état B</button>
-                <button class="btn btn-accent btn-small" id="diff-btn" type="button" disabled>Comparer</button>
+                <button class="btn btn-ghost btn-small" id="snapshot-a-btn" type="button">Capture state A</button>
+                <button class="btn btn-ghost btn-small" id="snapshot-b-btn" type="button">Capture state B</button>
+                <button class="btn btn-accent btn-small" id="diff-btn" type="button" disabled>Compare</button>
               </div>
               <p class="scan-status" id="scan-status"></p>
               <div class="scan-results" id="scan-results" hidden>
                 <table>
                   <thead>
-                    <tr><th>Adresse</th><th>Module + offset</th><th>A</th><th>B</th><th></th></tr>
+                    <tr><th>Address</th><th>Module + offset</th><th>A</th><th>B</th><th></th></tr>
                   </thead>
                   <tbody id="scan-results-body"></tbody>
                 </table>
@@ -221,8 +221,8 @@
     </div>
 
     <footer class="drawer-footer">
-      <button class="btn btn-danger" id="delete-game-btn">Supprimer</button>
-      <button class="btn btn-accent" id="apply-game-btn">Appliquer</button>
+      <button class="btn btn-danger" id="delete-game-btn">Delete</button>
+      <button class="btn btn-accent" id="apply-game-btn">Apply</button>
     </footer>
   </aside>
 
