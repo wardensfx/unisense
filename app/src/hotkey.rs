@@ -60,13 +60,13 @@ pub fn parse(spec: &str) -> Result<HotkeySpec> {
 
     let vk = parse_vk(key).ok_or_else(|| anyhow::anyhow!("touche inconnue dans hotkey: {key}"))?;
 
-    let mut modifiers: u32 = MOD_NOREPEAT.0 as u32;
+    let mut modifiers: u32 = MOD_NOREPEAT.0;
     for m in mods {
         modifiers |= match m.to_ascii_lowercase().as_str() {
-            "ctrl" | "control" => MOD_CONTROL.0 as u32,
-            "alt" => MOD_ALT.0 as u32,
-            "shift" => MOD_SHIFT.0 as u32,
-            "win" | "meta" => MOD_WIN.0 as u32,
+            "ctrl" | "control" => MOD_CONTROL.0,
+            "alt" => MOD_ALT.0,
+            "shift" => MOD_SHIFT.0,
+            "win" | "meta" => MOD_WIN.0,
             other => bail!("modificateur inconnu dans hotkey '{spec}': {other}"),
         };
     }
@@ -147,7 +147,7 @@ mod tests {
             parse("F9").unwrap(),
             HotkeySpec::Keyboard {
                 vk: 0x78,
-                modifiers: MOD_NOREPEAT.0 as u32
+                modifiers: MOD_NOREPEAT.0
             }
         );
     }
@@ -157,8 +157,8 @@ mod tests {
         match parse("Ctrl+Alt+F9").unwrap() {
             HotkeySpec::Keyboard { vk, modifiers } => {
                 assert_eq!(vk, 0x78);
-                assert_eq!(modifiers & MOD_CONTROL.0 as u32, MOD_CONTROL.0 as u32);
-                assert_eq!(modifiers & MOD_ALT.0 as u32, MOD_ALT.0 as u32);
+                assert_eq!(modifiers & MOD_CONTROL.0, MOD_CONTROL.0);
+                assert_eq!(modifiers & MOD_ALT.0, MOD_ALT.0);
             }
             _ => panic!("expected keyboard hotkey"),
         }
@@ -166,6 +166,9 @@ mod tests {
 
     #[test]
     fn parses_mouse_button() {
-        assert_eq!(parse("Mouse4").unwrap(), HotkeySpec::MouseButton(MouseButton::Button4));
+        assert_eq!(
+            parse("Mouse4").unwrap(),
+            HotkeySpec::MouseButton(MouseButton::Button4)
+        );
     }
 }

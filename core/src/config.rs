@@ -147,6 +147,7 @@ impl Config {
 impl GameEntry {
     /// Sensibilite in-game effective a utiliser dans le calcul du facteur.
     pub fn effective_sensitivity(&self) -> f64 {
-        self.current_sensitivity.unwrap_or(self.reference_sensitivity)
+        self.current_sensitivity
+            .unwrap_or(self.reference_sensitivity)
     }
 }

@@ -46,7 +46,11 @@ pub fn keyboard_hotkeys_from_specs(specs: Vec<(HotkeySpec, HotkeyBinding)>) -> V
     specs
         .into_iter()
         .filter_map(|(spec, binding)| match spec {
-            HotkeySpec::Keyboard { vk, modifiers } => Some(KeyboardHotkey { vk, modifiers, binding }),
+            HotkeySpec::Keyboard { vk, modifiers } => Some(KeyboardHotkey {
+                vk,
+                modifiers,
+                binding,
+            }),
             HotkeySpec::MouseButton(_) => None,
         })
         .collect()
@@ -218,13 +222,26 @@ unsafe fn show_menu(ctx: &Context) {
         )
     };
 
-    let passthrough_flags = if mode_is_passthrough { MF_STRING | MF_CHECKED } else { MF_STRING };
-    let _ = AppendMenuW(menu, passthrough_flags, ID_PASSTHROUGH, w!("Passthrough (natif)"));
+    let passthrough_flags = if mode_is_passthrough {
+        MF_STRING | MF_CHECKED
+    } else {
+        MF_STRING
+    };
+    let _ = AppendMenuW(
+        menu,
+        passthrough_flags,
+        ID_PASSTHROUGH,
+        w!("Passthrough (natif)"),
+    );
     let _ = AppendMenuW(menu, MF_SEPARATOR, 0, PCWSTR::null());
 
     for (i, name) in ctx.game_names.iter().enumerate() {
         let checked = active_game == Some(i);
-        let flags = if checked { MF_STRING | MF_CHECKED } else { MF_STRING };
+        let flags = if checked {
+            MF_STRING | MF_CHECKED
+        } else {
+            MF_STRING
+        };
         let wide = to_wide(name);
         let _ = AppendMenuW(menu, flags, ID_GAME_BASE + i, PCWSTR(wide.as_ptr()));
     }
@@ -290,7 +307,7 @@ extern "system" fn wndproc(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM)
                 LRESULT(0)
             }
             WM_COMMAND => {
-                let id = (wparam.0 & 0xFFFF) as usize;
+                let id = wparam.0 & 0xFFFF;
                 if id == ID_EXIT {
                     ctx.running.store(false, Ordering::SeqCst);
                     let _ = DestroyWindow(hwnd);

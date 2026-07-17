@@ -157,9 +157,9 @@ impl Interception {
 
             macro_rules! load {
                 ($name:literal) => {{
-                    let sym: Symbol<_> = lib
-                        .get($name)
-                        .with_context(|| format!("symbole manquant dans interception.dll: {:?}", $name))?;
+                    let sym: Symbol<_> = lib.get($name).with_context(|| {
+                        format!("symbole manquant dans interception.dll: {:?}", $name)
+                    })?;
                     *sym
                 }};
             }

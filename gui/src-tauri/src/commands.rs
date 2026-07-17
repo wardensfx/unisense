@@ -11,8 +11,7 @@ use crate::sysinfo::{self, DiffEntry, ProcessEntry};
 /// Config d'exemple embarquee au moment de la compilation : sert de point
 /// de depart ("config de base") sans dependre du reseau ni d'un chemin
 /// relatif fragile au runtime.
-const EXAMPLE_CONFIG_YAML: &str =
-    include_str!("../../../config/games.example.yaml");
+const EXAMPLE_CONFIG_YAML: &str = include_str!("../../../config/games.example.yaml");
 
 /// Meme convention que l'app tray : `config/games.yaml` a cote de
 /// l'executable. Les deux binaires (tray et GUI) sont destines a etre
@@ -70,7 +69,9 @@ pub fn mem_diff(
     snapshot_b: String,
 ) -> Result<Vec<DiffEntry>, String> {
     state
-        .with_two_snapshots(&snapshot_a, &snapshot_b, |a, b| sysinfo::diff_snapshots(a, b))
+        .with_two_snapshots(&snapshot_a, &snapshot_b, |a, b| {
+            sysinfo::diff_snapshots(a, b)
+        })
         .ok_or_else(|| "snapshot introuvable (deja efface ?)".to_string())
 }
 

@@ -44,8 +44,7 @@ fn run() -> Result<()> {
     // --- Resolution des hotkeys (clavier -> RegisterHotKey, souris -> capture.rs) ---
     let mut all_specs: Vec<(HotkeySpec, HotkeyAction)> = Vec::new();
     all_specs.push((
-        hotkey::parse(&config.settings.toggle_hotkey)
-            .context("settings.toggle_hotkey invalide")?,
+        hotkey::parse(&config.settings.toggle_hotkey).context("settings.toggle_hotkey invalide")?,
         HotkeyAction::TogglePassthrough,
     ));
     all_specs.push((
@@ -93,9 +92,7 @@ fn run() -> Result<()> {
         std::thread::spawn(move || {
             capture::run(state, mouse_hotkeys, running, |err| {
                 eprintln!("[unisense] capture: {err}");
-                show_fatal_error(&format!(
-                    "Impossible de demarrer la capture souris:\n{err}"
-                ));
+                show_fatal_error(&format!("Impossible de demarrer la capture souris:\n{err}"));
             });
         });
     }

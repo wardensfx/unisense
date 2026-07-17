@@ -70,7 +70,7 @@ pub fn list_processes() -> anyhow::Result<Vec<ProcessEntry>> {
                 break;
             }
         }
-        out.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+        out.sort_by_key(|a| a.name.to_lowercase());
         out.dedup_by(|a, b| a.name == b.name && a.pid == b.pid);
         Ok(out)
     }
@@ -114,8 +114,7 @@ pub fn take_snapshot(pid: u32) -> anyhow::Result<Snapshot> {
     let modules = list_modules_with_base(pid)?;
 
     unsafe {
-        let process =
-            OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, false, pid)?;
+        let process = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, false, pid)?;
         let _guard = HandleGuard(process);
 
         let mut regions = Vec::new();

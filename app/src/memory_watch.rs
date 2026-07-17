@@ -44,7 +44,12 @@ pub fn spawn_watchers(
     }
 }
 
-fn watch_loop(game_index: usize, detect: AutoDetect, state: Arc<Mutex<AppState>>, running: Arc<AtomicBool>) {
+fn watch_loop(
+    game_index: usize,
+    detect: AutoDetect,
+    state: Arc<Mutex<AppState>>,
+    running: Arc<AtomicBool>,
+) {
     let poll = Duration::from_millis(detect.poll_interval_ms.max(50));
     let mut was_in_game = false;
 
