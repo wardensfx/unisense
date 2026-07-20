@@ -12,7 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 unisense-core = { path = "../core" }
-libloading = "0.8"
+libloading = "0.9"
 anyhow = "1"
 
 # Bindings Win32 officiels (message loop, tray icon, RegisterHotKey, ReadProcessMemory).
